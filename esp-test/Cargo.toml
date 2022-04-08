@@ -1,0 +1,16 @@
+[package]
+name    = "esp_test"
+version = "0.1.0"
+authors = ["osobiehl <osobiehl@me.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+panic-halt   = "0.2"
+esp32c3-hal = { package = "esp32c3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
+riscv-rt = { version = "0.8", optional = true }
+nb = "1.0.0"
+
+[features]
+default = ["rt"]
+rt = ["riscv-rt"]
