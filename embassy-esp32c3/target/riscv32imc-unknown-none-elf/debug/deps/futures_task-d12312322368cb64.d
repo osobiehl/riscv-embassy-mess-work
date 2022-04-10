@@ -1,0 +1,10 @@
+/Users/osobiehl/Documents/esp-template/embassy-esp32c3/target/riscv32imc-unknown-none-elf/debug/deps/futures_task-d12312322368cb64.rmeta: /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/lib.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/spawn.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/future_obj.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/noop_waker.rs
+
+/Users/osobiehl/Documents/esp-template/embassy-esp32c3/target/riscv32imc-unknown-none-elf/debug/deps/libfutures_task-d12312322368cb64.rlib: /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/lib.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/spawn.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/future_obj.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/noop_waker.rs
+
+/Users/osobiehl/Documents/esp-template/embassy-esp32c3/target/riscv32imc-unknown-none-elf/debug/deps/futures_task-d12312322368cb64.d: /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/lib.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/spawn.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/future_obj.rs /Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/noop_waker.rs
+
+/Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/lib.rs:
+/Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/spawn.rs:
+/Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/future_obj.rs:
+/Users/osobiehl/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-task-0.3.21/src/noop_waker.rs:

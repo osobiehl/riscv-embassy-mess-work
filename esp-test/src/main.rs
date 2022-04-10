@@ -8,6 +8,17 @@ use nb::block;
 use panic_halt as _;
 use riscv_rt::entry;
 
+use embassy::executor::Spawner;
+use embassy::time::{Duration, Timer};
+
+
+#[embassy::task]
+async fn run(){
+    info!("tick");
+    Timer::after(Duration::from_secs(1)).await;
+}
+
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take().unwrap();

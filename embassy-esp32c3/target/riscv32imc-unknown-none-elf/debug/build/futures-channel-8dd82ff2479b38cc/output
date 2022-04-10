@@ -1,0 +1,2 @@
+cargo:rustc-cfg=futures_no_atomic_cas
+cargo:rerun-if-changed=no_atomic_cas.rs

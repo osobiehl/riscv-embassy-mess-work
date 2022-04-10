@@ -1,0 +1,5 @@
+cargo:rustc-link-lib=static=riscv-rt
+cargo:rustc-link-search=/Users/osobiehl/Documents/esp-template/embassy-esp32c3/target/riscv32imc-unknown-none-elf/debug/build/riscv-rt-6fca8802cc3d7378/out
+cargo:rustc-link-search=/Users/osobiehl/Documents/esp-template/embassy-esp32c3/target/riscv32imc-unknown-none-elf/debug/build/riscv-rt-6fca8802cc3d7378/out
+cargo:rerun-if-changed=build.rs
+cargo:rerun-if-changed=link.x
