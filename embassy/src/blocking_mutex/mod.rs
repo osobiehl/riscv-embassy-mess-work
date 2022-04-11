@@ -104,7 +104,7 @@ impl<T> Mutex<raw::NoopRawMutex, T> {
 
 #[cfg(any(cortex_m, feature = "std"))]
 pub use thread_mode_mutex::*;
-#[cfg(any(cortex_m, feature = "std"))]
+#[cfg(any(cortex_m, feature = "std", riscv))]
 mod thread_mode_mutex {
     use super::*;
 
