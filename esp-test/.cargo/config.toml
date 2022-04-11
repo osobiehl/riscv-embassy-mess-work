@@ -1,4 +1,4 @@
-[target.riscv32imc-unknown-none-elf]
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
 runner = "espflash --format=direct-boot --monitor"
 
 [build]

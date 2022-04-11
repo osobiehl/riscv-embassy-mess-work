@@ -1,0 +1,11 @@
+[target.riscv32imc-unknown-none-elf]
+runner = "espflash --format=direct-boot --monitor"
+
+[build]
+rustflags = [
+    "-C", "link-arg=-Tlinkall.x",
+]
+target = "riscv32imc-unknown-none-elf"
+
+[unstable]
+build-std = ["core"]

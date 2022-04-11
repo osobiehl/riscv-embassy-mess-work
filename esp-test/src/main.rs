@@ -3,7 +3,7 @@
 
 use core::fmt::Write;
 
-use esp32c3_hal::{pac::Peripherals, prelude::*, RtcCntl, Serial, Timer};
+use esp32c3_hal::{pac::{Peripherals, LEDC}, prelude::*, RtcCntl, Serial, Timer};
 use nb::block;
 use panic_halt as _;
 use riscv_rt::entry;
