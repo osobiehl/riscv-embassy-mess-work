@@ -1,2 +1,0 @@
-cargo:rustc-link-search=/Users/osobiehl/Documents/esp-template/embassy-esp32c3/target/riscv32imc-unknown-none-elf/debug/build/defmt-460b5dff197b3fbc/out
-cargo:rustc-cfg=no_cas

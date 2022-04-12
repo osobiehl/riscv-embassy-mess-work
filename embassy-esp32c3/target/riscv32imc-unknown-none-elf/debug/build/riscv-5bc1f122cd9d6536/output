@@ -1,4 +1,0 @@
-cargo:rustc-link-lib=static=riscv
-cargo:rustc-link-search=/Users/osobiehl/Documents/esp-template/embassy-esp32c3/target/riscv32imc-unknown-none-elf/debug/build/riscv-5bc1f122cd9d6536/out
-cargo:rustc-cfg=riscv
-cargo:rustc-cfg=riscv32

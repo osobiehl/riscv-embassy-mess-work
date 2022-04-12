@@ -1,3 +1,0 @@
-cargo:rustc-link-lib=static=riscv-atomic-emulation-trap
-cargo:rustc-link-search=/Users/osobiehl/Documents/esp-template/embassy-esp32c3/target/riscv32imc-unknown-none-elf/debug/build/riscv-atomic-emulation-trap-f1a7124476fa0827/out
-cargo:rerun-if-changed=build.rs
