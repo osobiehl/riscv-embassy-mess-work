@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-[target.'cfg(all(target_arch = "arm", target_os = "none"))']
-=======
 [target.'cfg(all(target_arch = "riscv32imc", target_os = "none"))']
->>>>>>> 3178f42b7c63bccc863aed1362d553c72941c2eb
 runner = "espflash --format=direct-boot --monitor"
 
 [build]
