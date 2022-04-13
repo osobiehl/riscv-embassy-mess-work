@@ -11,6 +11,20 @@ pub(crate) mod fmt;
 pub mod blocking_mutex;
 pub mod channel;
 pub mod executor;
+
+cfg_if::cfg_if! {
+    if #[cfg(cortex_m)] {
+        #[path="interrupt/interrupt.rs"]
+        pub mod interrupt;
+    }
+    else if #[cfg(target_arch="riscv32")] {
+        #[path="interrupt/interrupt_riscv32.rs"]
+        pub mod interrupt;
+    }
+
+}
+
+
 #[cfg(cortex_m)]
 pub mod interrupt;
 pub mod io;

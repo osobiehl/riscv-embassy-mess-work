@@ -57,6 +57,8 @@ executor-agnostic = []
 defmt = { version = "0.3", optional = true }
 log = { version = "0.4.14", optional = true }
 
+riscv = "0.7.0"
+
 embedded-hal-02 = { package = "embedded-hal", version = "0.2.6" }
 embedded-hal-1 = { package = "embedded-hal", version = "1.0.0-alpha.7", git = "https://github.com/embassy-rs/embedded-hal", branch = "embassy2", optional = true}
 embedded-hal-async = { version = "0.0.1", git = "https://github.com/embassy-rs/embedded-hal", branch = "embassy2", optional = true}
@@ -88,6 +90,10 @@ cortex-m = "0.7.3"
 cortex-m = "0.7.3"
 [target."thumbv8m.main-none-eabihf".dependencies]
 cortex-m = "0.7.3"
+[target."riscv32imc-unknown-none-elf"]
+riscv = "0.7.0"
+
+
 
 [dev-dependencies]
 embassy = { path = ".", features = ["executor-agnostic"] }

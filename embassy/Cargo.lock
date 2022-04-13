@@ -188,6 +188,7 @@ dependencies = [
  "js-sys",
  "log",
  "pin-project",
+ "riscv",
  "wasm-bindgen",
  "wasm-timer",
 ]
