@@ -1,5 +1,7 @@
 use core::marker::PhantomData;
 use core::ptr;
+use riscv::register::{mcause, mip};
+
 
 use super::{raw, Spawner};
 use crate::interrupt::{Interrupt, InterruptExt};
