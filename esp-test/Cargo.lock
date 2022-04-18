@@ -205,10 +205,12 @@ dependencies = [
  "defmt",
  "embassy-macros",
  "embedded-hal",
+ "esp32c3",
  "futures",
  "heapless",
  "pin-project",
  "riscv",
+ "riscv-atomic-emulation-trap",
 ]
 
 [[package]]

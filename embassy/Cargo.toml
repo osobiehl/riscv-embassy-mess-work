@@ -62,6 +62,9 @@ riscv = "0.7.0"
 embedded-hal-02 = { package = "embedded-hal", version = "0.2.6" }
 embedded-hal-1 = { package = "embedded-hal", version = "1.0.0-alpha.7", git = "https://github.com/embassy-rs/embedded-hal", branch = "embassy2", optional = true}
 embedded-hal-async = { version = "0.0.1", git = "https://github.com/embassy-rs/embedded-hal", branch = "embassy2", optional = true}
+#TODO REFACTOR SO NOT ADDED FOR CORTEX_M architectures
+esp32c3_pac = { package = "esp32c3", git = "https://github.com/esp-rs/esp-pacs.git", branch = "with_source"}
+riscv-atomic-emulation-trap = "0.1.0"
 
 futures     = { version = "0.3.17", default-features = false, features = [ "cfg-target-has-atomic", "unstable" ] }
 pin-project = { version = "1.0.8", default-features = false }
