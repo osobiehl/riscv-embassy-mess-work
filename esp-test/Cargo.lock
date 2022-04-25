@@ -79,7 +79,7 @@ checksum = "37ff967e867ca14eba0c34ac25cd71ea98c678e741e3915d923999bb2fe7c826"
 dependencies = [
  "bare-metal 0.2.5",
  "bitfield",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "volatile-register",
 ]
 
@@ -204,7 +204,8 @@ dependencies = [
  "critical-section",
  "defmt",
  "embassy-macros",
- "embedded-hal",
+ "embedded-hal 0.2.7",
+ "embedded-hal-async",
  "esp32c3 0.3.0",
  "futures",
  "heapless",
@@ -229,6 +230,8 @@ version = "0.1.0"
 dependencies = [
  "critical-section",
  "embassy",
+ "embassy-macros",
+ "embedded-hal 0.2.7",
  "esp32c3 0.4.0",
  "esp32c3-hal",
  "futures",
@@ -237,6 +240,7 @@ dependencies = [
  "panic-halt",
  "riscv 0.7.0",
  "riscv-rt",
+ "void",
 ]
 
 [[package]]
@@ -250,12 +254,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-hal"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/embassy-rs/embedded-hal?branch=embassy2#bc0e0ca74a64d65d1b6c994f186bb89eeb364965"
+dependencies = [
+ "nb 1.0.0",
+]
+
+[[package]]
+name = "embedded-hal-async"
+version = "0.0.1"
+source = "git+https://github.com/embassy-rs/embedded-hal?branch=embassy2#bc0e0ca74a64d65d1b6c994f186bb89eeb364965"
+dependencies = [
+ "embedded-hal 1.0.0-alpha.7",
+]
+
+[[package]]
 name = "esp-hal-common"
 version = "0.1.0"
 source = "git+https://github.com/esp-rs/esp-hal.git#834d7b1d42cf59fa2e13697d621da9adf0b7eb8a"
 dependencies = [
  "cfg-if",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "esp-hal-procmacros",
  "esp32c3 0.3.0",
  "nb 1.0.0",
@@ -305,7 +325,7 @@ version = "0.1.0"
 source = "git+https://github.com/esp-rs/esp-hal.git#834d7b1d42cf59fa2e13697d621da9adf0b7eb8a"
 dependencies = [
  "bare-metal 1.0.0",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "esp-hal-common",
  "nb 1.0.0",
  "r0",
@@ -642,7 +662,7 @@ checksum = "5e2856a701069e2d262b264750d382407d272d5527f7a51d3777d1805b4e2d3c"
 dependencies = [
  "bare-metal 1.0.0",
  "bit_field",
- "embedded-hal",
+ "embedded-hal 0.2.7",
 ]
 
 [[package]]

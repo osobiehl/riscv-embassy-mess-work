@@ -1,3 +1,4 @@
+use core::result::Result::{Err, Ok};
 use crate::interrupt::{CpuInterrupt, ESP32C3_Interrupts, InterruptKind, Priority};
 pub use esp32c3::{Interrupt, INTERRUPT_CORE0, SYSTIMER};
 pub fn get_time() -> u64 {
@@ -63,7 +64,7 @@ pub fn set_target0_alarm_from_timestamp(timestamp: u64) {
 
 pub fn set_target1_alarm_from_timestamp(timestamp: u64) {
     unsafe {
-        let micros_to_delay = delay_micros; //(delay_micros * CLK_FREQ_HZ) / 1_000_000;
+        // let micros_to_delay = delay_micros; //(delay_micros * CLK_FREQ_HZ) / 1_000_000;
         let systimer = &*SYSTIMER::ptr();
         systimer.target1_conf.write(|w| {
             // /1. Set SYSTIMER_TARGETx_TIMER_UNIT_SEL to select the counter (UNIT0 or UNIT1) used for COMPx.
@@ -102,7 +103,7 @@ pub fn set_target1_alarm_from_timestamp(timestamp: u64) {
 
 pub fn set_target2_alarm_from_timestamp(timestamp: u64) {
     unsafe {
-        let micros_to_delay = delay_micros; //(delay_micros * CLK_FREQ_HZ) / 1_000_000;
+        // let micros_to_delay = delay_micros; //(delay_micros * CLK_FREQ_HZ) / 1_000_000;
         let systimer = &*SYSTIMER::ptr();
         systimer.target2_conf.write(|w| {
             // /1. Set SYSTIMER_TARGETx_TIMER_UNIT_SEL to select the counter (UNIT0 or UNIT1) used for COMPx.

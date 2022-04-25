@@ -1,45 +1,41 @@
+#![feature(type_alias_impl_trait)]
 #![no_std]
 #![no_main]
 
 use core::fmt::Write;
 
-use esp32c3_hal::{pac::{Peripherals, LEDC}, prelude::*, RtcCntl, Serial, Timer};
+// use esp32c3_hal::{pac::{Peripherals, LEDC, apb_ctrl::peri_backup_config}, prelude::*, RtcCntl, Serial, Timer as old_timer};
+use futures::task::Spawn;
 use nb::block;
 use panic_halt as _;
 use riscv_rt::entry;
-
+use embassy;
 use embassy::executor::Spawner;
 use embassy::time::{Duration, Timer};
+// use embassy_macros::{main, task};
+use embassy_esp32c3::{Serial};
+use embassy_esp32c3::pac::{UART0, Peripherals};
 
-use embassy_esp32c3::{}
-
-
-#[embassy::task]
-async fn run(){
-    info!("tick");
-    Timer::after(Duration::from_secs(1)).await;
-}
+// use embassy_esp32c3::{}
 
 
-#[entry]
-fn main() -> ! {
-    let peripherals = Peripherals::take().unwrap();
+// #[task]
+// async fn run(){
+//     static  peripherals: Peripherals = Peripherals::take().unwrap();
+//     static serial0: Serial<UART0> = Serial::new(peripherals.UART0).unwrap();
+//     writeln!(serial0, "tick!");
+//     Timer::after(Duration::from_secs(1)).await;
+// }
 
-    let mut rtc_cntl = RtcCntl::new(peripherals.RTC_CNTL);
-    let mut serial0 = Serial::new(peripherals.UART0).unwrap();
-    let mut timer0 = Timer::new(peripherals.TIMG0);
-    let mut timer1 = Timer::new(peripherals.TIMG1);
 
+#[embassy::main]
+async fn main(spawner: Spawner, _p: Peripherals) -> ! {
     // Disable watchdog timers
-    rtc_cntl.set_super_wdt_enable(false);
-    rtc_cntl.set_wdt_enable(false);
-    timer0.disable();
-    timer1.disable();
-
-    timer0.start(10_000_000u64);
+    
+    let mut serial0 = Serial::new(_p.UART0).unwrap();
 
     loop {
         writeln!(serial0, "Hello world!").unwrap();
-        block!(timer0.wait()).unwrap();
+        Timer::after(Duration::from_micros(1000)).await;
     }
 }

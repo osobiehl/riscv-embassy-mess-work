@@ -11,7 +11,10 @@ const HAL: Option<&str> = Some("embassy_stm32");
 const HAL: Option<&str> = Some("embassy_nrf");
 #[cfg(feature = "rp")]
 const HAL: Option<&str> = Some("embassy_rp");
-#[cfg(not(any(feature = "stm32", feature = "nrf", feature = "rp")))]
+#[cfg(feature = "esp32c3")]
+const HAL: Option<&str> = Some("embassy_esp32c3");
+
+#[cfg(not(any(feature = "stm32", feature = "nrf", feature = "rp", feature = "esp32c3")))]
 const HAL: Option<&str> = None;
 
 #[derive(Debug, FromMeta)]
@@ -119,7 +122,8 @@ pub fn run(args: syn::AttributeArgs, f: syn::ItemFn) -> Result<TokenStream, Toke
             }
         }
     };
-    #[cfg(target_arch="riscv32")]
+    // TODO FIX
+    // #[cfg(target_arch="riscv32")]
     let main = {
         let config = args
             .config

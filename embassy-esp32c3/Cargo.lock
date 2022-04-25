@@ -229,6 +229,8 @@ version = "0.1.0"
 dependencies = [
  "critical-section",
  "embassy",
+ "embassy-macros",
+ "embedded-hal",
  "esp32c3 0.4.0",
  "esp32c3-hal",
  "futures",
@@ -237,6 +239,7 @@ dependencies = [
  "panic-halt",
  "riscv 0.7.0",
  "riscv-rt",
+ "void",
 ]
 
 [[package]]
