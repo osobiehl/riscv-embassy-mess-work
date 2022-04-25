@@ -2,7 +2,6 @@ use core::marker::PhantomData;
 use core::ptr;
 use riscv::register::{mcause, mip};
 
-
 use super::{raw, Spawner};
 use crate::interrupt::{Interrupt, InterruptExt};
 
@@ -25,7 +24,8 @@ impl Executor {
     /// Create a new Executor.
     pub fn new() -> Self {
         Self {
-            inner: raw::Executor::new(|_| cortex_m::asm::sev(), ptr::null_mut()),
+            //TODO implement sev() for riscv using asm or one of software interrupts as synthetic alert
+            inner: raw::Executor::new(|_| {}, ptr::null_mut()),
             not_send: PhantomData,
         }
     }
@@ -53,20 +53,20 @@ impl Executor {
 
         loop {
             unsafe { self.inner.poll() };
-            cortex_m::asm::wfe();
+            unsafe { riscv::asm::wfi() }
         }
     }
 }
-
+//TODO UNIMPLEMENTED
 fn pend_by_number(n: u16) {
-    #[derive(Clone, Copy)]
-    struct N(u16);
-    unsafe impl cortex_m::interrupt::InterruptNumber for N {
-        fn number(self) -> u16 {
-            self.0
-        }
-    }
-    cortex_m::peripheral::NVIC::pend(N(n))
+    // #[derive(Clone, Copy)]
+    // struct N(u16);
+    // unsafe impl cortex_m::interrupt::InterruptNumber for N {
+    //     fn number(self) -> u16 {
+    //         self.0
+    //     }
+    // }
+    // cortex_m::peripheral::NVIC::pend(N(n))
 }
 
 /// Interrupt mode executor.

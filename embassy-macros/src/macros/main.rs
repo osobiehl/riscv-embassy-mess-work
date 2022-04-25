@@ -79,7 +79,9 @@ pub fn run(args: syn::AttributeArgs, f: syn::ItemFn) -> Result<TokenStream, Toke
         }
     };
 
-    #[cfg(all(not(feature = "std"), not(feature = "wasm")))]
+
+
+    #[cfg(cortex_m)]
     let main = {
         let config = args
             .config
@@ -117,6 +119,44 @@ pub fn run(args: syn::AttributeArgs, f: syn::ItemFn) -> Result<TokenStream, Toke
             }
         }
     };
+    #[cfg(target_arch="riscv32")]
+    let main = {
+        let config = args
+            .config
+            .map(|s| s.parse::<syn::Expr>().unwrap())
+            .unwrap_or_else(|| {
+                syn::Expr::Verbatim(quote! {
+                    Default::default()
+                })
+            });
+
+        let (hal_setup, peris_arg) = match HAL {
+            Some(hal) => {
+                let embassy_hal_path = embassy_prefix.append(hal).path();
+                (
+                    quote!(
+                        let p = #embassy_hal_path::init(#config);
+                    ),
+                    quote!(p),
+                )
+            }
+            None => (quote!(), quote!()),
+        };
+
+        quote! {
+            #[riscv_rt::entry]
+            fn main() -> ! {
+                #hal_setup
+
+                let mut executor = #embassy_path::executor::Executor::new();
+                let executor = unsafe { __make_static(&mut executor) };
+
+                executor.run(|spawner| {
+                    spawner.must_spawn(__embassy_main(spawner, #peris_arg));
+                })
+            }
+        }
+    };
 
     let result = quote! {
         #[#embassy_path::task(embassy_prefix = #embassy_prefix_lit)]
@@ -127,7 +167,7 @@ pub fn run(args: syn::AttributeArgs, f: syn::ItemFn) -> Result<TokenStream, Toke
         unsafe fn __make_static<T>(t: &mut T) -> &'static mut T {
             ::core::mem::transmute(t)
         }
-
+//TODO find out why this is still in the red
         #main
     };
 

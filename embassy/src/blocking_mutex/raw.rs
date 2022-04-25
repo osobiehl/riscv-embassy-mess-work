@@ -53,7 +53,7 @@ impl RawMutex for NoopRawMutex {
 
 // ================
 
-#[cfg(any(cortex_m, feature = "std"))]
+#[cfg(any(cortex_m, feature = "std",target_arch="riscv32"))]
 mod thread_mode {
     use super::*;
 
@@ -102,11 +102,13 @@ mod thread_mode {
     pub(crate) fn in_thread_mode() -> bool {
         #[cfg(feature = "std")]
         return Some("main") == std::thread::current().name();
-
-        #[cfg(not(feature = "std"))]
+        // TODO refactor for interrupt mode on riscv
+        #[cfg(target_arch="riscv32")]
+        return true;
+        #[cfg(cortex_m)]
         return cortex_m::peripheral::SCB::vect_active()
             == cortex_m::peripheral::scb::VectActive::ThreadMode;
     }
 }
-#[cfg(any(cortex_m, feature = "std"))]
+#[cfg(any(cortex_m, feature = "std", target_arch="riscv32"))]
 pub use thread_mode::*;

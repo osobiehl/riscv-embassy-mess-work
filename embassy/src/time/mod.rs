@@ -67,6 +67,10 @@ const TPS: u64 = 32_768;
 
 #[cfg(feature = "time-tick-1mhz")]
 const TPS: u64 = 1_000_000;
+//TODO add ticks per second for esp32c3
+
+#[cfg(feature= "time-tick-16mhz")]
+const TPS: u64 = 16_000_000;
 
 /// Ticks per second of the global timebase.
 ///

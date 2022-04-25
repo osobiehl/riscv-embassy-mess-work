@@ -1,36 +1,41 @@
-use esp32c3_pac::{pac::Interrupt, Cpu};
-extern "Rust" {
-    static handler1: Handler;
-    static handler2: Handler;
-    static handler3: Handler;
-    static handler4: Handler;
-    static handler5: Handler;
-    static handler6: Handler;
-    static handler7: Handler;
-    static handler8: Handler;
-    static handler9: Handler;
-    static handler10: Handler;
-    static handler11: Handler;
-    static handler12: Handler;
-    static handler13: Handler;
-    static handler14: Handler;
-    static handler15: Handler;
-    static handler16: Handler;
-    static handler17: Handler;
-    static handler18: Handler;
-    static handler19: Handler;
-    static handler20: Handler;
-    static handler21: Handler;
-    static handler22: Handler;
-    static handler23: Handler;
-    static handler24: Handler;
-    static handler25: Handler;
-    static handler26: Handler;
-    static handler27: Handler;
-    static handler28: Handler;
-    static handler29: Handler;
-    static handler30: Handler;
-    static handler31: Handler;
+use esp32c3_pac::{Interrupt as Interrupt_esp32c3, INTERRUPT_CORE0};
+use riscv::register::mcause;
+//TODO SETUP BOOT LINKING
+// User code shouldn't usually take the mutable TrapFrame or the TrapFrame in
+// general. However this makes things like preemtive multitasking easier in
+// future
+extern "C" {
+    fn interrupt1(frame: &mut TrapFrame);
+    fn interrupt2(frame: &mut TrapFrame);
+    fn interrupt3(frame: &mut TrapFrame);
+    fn interrupt4(frame: &mut TrapFrame);
+    fn interrupt5(frame: &mut TrapFrame);
+    fn interrupt6(frame: &mut TrapFrame);
+    fn interrupt7(frame: &mut TrapFrame);
+    fn interrupt8(frame: &mut TrapFrame);
+    fn interrupt9(frame: &mut TrapFrame);
+    fn interrupt10(frame: &mut TrapFrame);
+    fn interrupt11(frame: &mut TrapFrame);
+    fn interrupt12(frame: &mut TrapFrame);
+    fn interrupt13(frame: &mut TrapFrame);
+    fn interrupt14(frame: &mut TrapFrame);
+    fn interrupt15(frame: &mut TrapFrame);
+    fn interrupt16(frame: &mut TrapFrame);
+    fn interrupt17(frame: &mut TrapFrame);
+    fn interrupt18(frame: &mut TrapFrame);
+    fn interrupt19(frame: &mut TrapFrame);
+    fn interrupt20(frame: &mut TrapFrame);
+    fn interrupt21(frame: &mut TrapFrame);
+    fn interrupt22(frame: &mut TrapFrame);
+    fn interrupt23(frame: &mut TrapFrame);
+    fn interrupt24(frame: &mut TrapFrame);
+    fn interrupt25(frame: &mut TrapFrame);
+    fn interrupt26(frame: &mut TrapFrame);
+    fn interrupt27(frame: &mut TrapFrame);
+    fn interrupt28(frame: &mut TrapFrame);
+    fn interrupt29(frame: &mut TrapFrame);
+    fn interrupt30(frame: &mut TrapFrame);
+    fn interrupt31(frame: &mut TrapFrame);
 }
 
 /// Interrupt kind
@@ -44,6 +49,7 @@ pub enum InterruptKind {
 /// Enumeration of available CPU interrupts.
 /// It is possible to create a handler for each of the interrupts. (e.g.
 /// `interrupt3`)
+#[derive(Clone,Copy)]
 pub enum CpuInterrupt {
     Interrupt1 = 1,
     Interrupt2,
@@ -77,8 +83,7 @@ pub enum CpuInterrupt {
     Interrupt30,
     Interrupt31,
 }
-
-/// Interrupt priority levels.
+#[derive(Clone,Copy)]
 pub enum Priority {
     None,
     Priority1,
@@ -98,87 +103,6 @@ pub enum Priority {
     Priority15,
 }
 
-/// Enable and assign a peripheral interrupt to an CPU interrupt.
-pub fn enable(_core: Cpu, interrupt: Interrupt, which: CpuInterrupt) {
-    unsafe {
-        let interrupt_number = interrupt as isize;
-        let cpu_interrupt_number = which as isize;
-        let intr = &*crate::pac::INTERRUPT_CORE0::ptr();
-        let intr_map_base = intr.mac_intr_map.as_ptr();
-        intr_map_base
-            .offset(interrupt_number)
-            .write_volatile(cpu_interrupt_number as u32);
-        // enable interrupt
-        intr.cpu_int_enable
-            .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits()));
-    }
-}
-
-/// Disable the given peripheral interrupt.
-pub fn disable(_core: Cpu, interrupt: Interrupt) {
-    unsafe {
-        let interrupt_number = interrupt as isize;
-        let intr = &*crate::pac::INTERRUPT_CORE0::ptr();
-        let intr_map_base = intr.mac_intr_map.as_ptr();
-        intr_map_base.offset(interrupt_number).write_volatile(0);
-    }
-}
-
-/// Set the interrupt kind (i.e. level or edge) of an CPU interrupt
-pub fn set_kind(_core: Cpu, which: CpuInterrupt, kind: InterruptKind) {
-    unsafe {
-        let intr = &*crate::pac::INTERRUPT_CORE0::ptr();
-        let cpu_interrupt_number = which as isize;
-
-        let interrupt_type = match kind {
-            InterruptKind::Level => 0,
-            InterruptKind::Edge => 1,
-        };
-        intr.cpu_int_type.modify(|r, w| {
-            w.bits(
-                r.bits() & !(1 << cpu_interrupt_number) | (interrupt_type << cpu_interrupt_number),
-            )
-        });
-    }
-}
-
-/// Set the priority level of an CPU interrupt
-pub fn set_priority(_core: Cpu, which: CpuInterrupt, priority: Priority) {
-    unsafe {
-        let intr = &*crate::pac::INTERRUPT_CORE0::ptr();
-        let cpu_interrupt_number = which as isize;
-        let intr_prio_base = intr.cpu_int_pri_0.as_ptr();
-
-        intr_prio_base
-            .offset(cpu_interrupt_number as isize)
-            .write_volatile(priority as u32);
-    }
-}
-
-/// Clear a CPU interrupt
-pub fn clear(_core: Cpu, which: CpuInterrupt) {
-    unsafe {
-        let cpu_interrupt_number = which as isize;
-        let intr = &*crate::pac::INTERRUPT_CORE0::ptr();
-        intr.cpu_int_clear
-            .write(|w| w.bits(1 << cpu_interrupt_number));
-    }
-}
-
-/// Get status of peripheral interrupts
-pub fn get_status(_core: Cpu) -> u128 {
-    unsafe {
-        ((*crate::pac::INTERRUPT_CORE0::ptr())
-            .intr_status_reg_0
-            .read()
-            .bits() as u128)
-            | ((*crate::pac::INTERRUPT_CORE0::ptr())
-                .intr_status_reg_1
-                .read()
-                .bits() as u128)
-                << 32
-    }
-}
 
 /// Registers saved in trap handler
 #[doc(hidden)]
@@ -236,161 +160,37 @@ pub unsafe extern "C" fn start_trap_rust_hal(trap_frame: *mut TrapFrame) {
     } else {
         let code = riscv::register::mcause::read().code();
         match code {
-            1 => {
-                let func = handler1.func as unsafe fn(*mut ());
-                let arg: *mut () = handler1.ctx as *mut ();
-                func(arg);
-            }
-            2 => {
-                let func = handler2.func as unsafe fn(*mut ());
-                let arg: *mut () = handler2.ctx as *mut ();
-                func(arg);
-            }
-            3 => {
-                let func = handler3.func as unsafe fn(*mut ());
-                let arg: *mut () = handler3.ctx as *mut ();
-                func(arg);
-            }
-            4 => {
-                let func = handler4.func as unsafe fn(*mut ());
-                let arg: *mut () = handler4.ctx as *mut ();
-                func(arg);
-            }
-            5 => {
-                let func = handler5.func as unsafe fn(*mut ());
-                let arg: *mut () = handler5.ctx as *mut ();
-                func(arg);
-            }
-            6 => {
-                let func = handler6.func as unsafe fn(*mut ());
-                let arg: *mut () = handler6.ctx as *mut ();
-                func(arg);
-            }
-            7 => {
-                let func = handler7.func as unsafe fn(*mut ());
-                let arg: *mut () = handler7.ctx as *mut ();
-                func(arg);
-            }
-            8 => {
-                let func = handler8.func as unsafe fn(*mut ());
-                let arg: *mut () = handler8.ctx as *mut ();
-                func(arg);
-            }
-            9 => {
-                let func = handler9.func as unsafe fn(*mut ());
-                let arg: *mut () = handler9.ctx as *mut ();
-                func(arg);
-            }
-            10 => {
-                let func = handler10.func as unsafe fn(*mut ());
-                let arg: *mut () = handler10.ctx as *mut ();
-                func(arg);
-            }
-            11 => {
-                let func = handler11.func as unsafe fn(*mut ());
-                let arg: *mut () = handler11.ctx as *mut ();
-                func(arg);
-            }
-            12 => {
-                let func = handler12.func as unsafe fn(*mut ());
-                let arg: *mut () = handler12.ctx as *mut ();
-                func(arg);
-            }
-            13 => {
-                let func = handler13.func as unsafe fn(*mut ());
-                let arg: *mut () = handler13.ctx as *mut ();
-                func(arg);
-            }
-            14 => {
-                let func = handler14.func as unsafe fn(*mut ());
-                let arg: *mut () = handler14.ctx as *mut ();
-                func(arg);
-            }
-            16 => {
-                let func = handler16.func as unsafe fn(*mut ());
-                let arg: *mut () = handler16.ctx as *mut ();
-                func(arg);
-            }
-            15 => {
-                let func = handler15.func as unsafe fn(*mut ());
-                let arg: *mut () = handler15.ctx as *mut ();
-                func(arg);
-            }
-            17 => {
-                let func = handler17.func as unsafe fn(*mut ());
-                let arg: *mut () = handler17.ctx as *mut ();
-                func(arg);
-            }
-            18 => {
-                let func = handler18.func as unsafe fn(*mut ());
-                let arg: *mut () = handler18.ctx as *mut ();
-                func(arg);
-            }
-            19 => {
-                let func = handler19.func as unsafe fn(*mut ());
-                let arg: *mut () = handler19.ctx as *mut ();
-                func(arg);
-            }
-            20 => {
-                let func = handler20.func as unsafe fn(*mut ());
-                let arg: *mut () = handler20.ctx as *mut ();
-                func(arg);
-            }
-            21 => {
-                let func = handler21.func as unsafe fn(*mut ());
-                let arg: *mut () = handler21.ctx as *mut ();
-                func(arg);
-            }
-            22 => {
-                let func = handler22.func as unsafe fn(*mut ());
-                let arg: *mut () = handler22.ctx as *mut ();
-                func(arg);
-            }
-            23 => {
-                let func = handler23.func as unsafe fn(*mut ());
-                let arg: *mut () = handler23.ctx as *mut ();
-                func(arg);
-            }
-            24 => {
-                let func = handler24.func as unsafe fn(*mut ());
-                let arg: *mut () = handler24.ctx as *mut ();
-                func(arg);
-            }
-            25 => {
-                let func = handler25.func as unsafe fn(*mut ());
-                let arg: *mut () = handler25.ctx as *mut ();
-                func(arg);
-            }
-            26 => {
-                let func = handler26.func as unsafe fn(*mut ());
-                let arg: *mut () = handler26.ctx as *mut ();
-                func(arg);
-            }
-            27 => {
-                let func = handler27.func as unsafe fn(*mut ());
-                let arg: *mut () = handler27.ctx as *mut ();
-                func(arg);
-            }
-            28 => {
-                let func = handler28.func as unsafe fn(*mut ());
-                let arg: *mut () = handler28.ctx as *mut ();
-                func(arg);
-            }
-            29 => {
-                let func = handler29.func as unsafe fn(*mut ());
-                let arg: *mut () = handler29.ctx as *mut ();
-                func(arg);
-            }
-            30 => {
-                let func = handler30.func as unsafe fn(*mut ());
-                let arg: *mut () = handler30.ctx as *mut ();
-                func(arg);
-            }
-            31 => {
-                let func = handler31.func as unsafe fn(*mut ());
-                let arg: *mut () = handler31.ctx as *mut ();
-                func(arg);
-            }
+            1 => interrupt1(trap_frame.as_mut().unwrap()),
+            2 => interrupt2(trap_frame.as_mut().unwrap()),
+            3 => interrupt3(trap_frame.as_mut().unwrap()),
+            4 => interrupt4(trap_frame.as_mut().unwrap()),
+            5 => interrupt5(trap_frame.as_mut().unwrap()),
+            6 => interrupt6(trap_frame.as_mut().unwrap()),
+            7 => interrupt7(trap_frame.as_mut().unwrap()),
+            8 => interrupt8(trap_frame.as_mut().unwrap()),
+            9 => interrupt9(trap_frame.as_mut().unwrap()),
+            10 => interrupt10(trap_frame.as_mut().unwrap()),
+            11 => interrupt11(trap_frame.as_mut().unwrap()),
+            12 => interrupt12(trap_frame.as_mut().unwrap()),
+            13 => interrupt13(trap_frame.as_mut().unwrap()),
+            14 => interrupt14(trap_frame.as_mut().unwrap()),
+            16 => interrupt16(trap_frame.as_mut().unwrap()),
+            15 => interrupt15(trap_frame.as_mut().unwrap()),
+            17 => interrupt17(trap_frame.as_mut().unwrap()),
+            18 => interrupt18(trap_frame.as_mut().unwrap()),
+            19 => interrupt19(trap_frame.as_mut().unwrap()),
+            20 => interrupt20(trap_frame.as_mut().unwrap()),
+            21 => interrupt21(trap_frame.as_mut().unwrap()),
+            22 => interrupt22(trap_frame.as_mut().unwrap()),
+            23 => interrupt23(trap_frame.as_mut().unwrap()),
+            24 => interrupt24(trap_frame.as_mut().unwrap()),
+            25 => interrupt25(trap_frame.as_mut().unwrap()),
+            26 => interrupt26(trap_frame.as_mut().unwrap()),
+            27 => interrupt27(trap_frame.as_mut().unwrap()),
+            28 => interrupt28(trap_frame.as_mut().unwrap()),
+            29 => interrupt29(trap_frame.as_mut().unwrap()),
+            30 => interrupt30(trap_frame.as_mut().unwrap()),
+            31 => interrupt31(trap_frame.as_mut().unwrap()),
             _ => DefaultHandler(),
         };
     }
@@ -492,9 +292,6 @@ pub fn _setup_interrupts() {
     };
 }
 
-
-
-
 use atomic_polyfill::{compiler_fence, AtomicPtr, Ordering};
 use core::mem;
 use core::ptr;
@@ -519,17 +316,10 @@ impl Handler {
     }
 }
 
-#[derive(Clone, Copy)]
-pub(crate) struct NrWrap(pub(crate) u16);
-unsafe impl cortex_m::interrupt::InterruptNumber for NrWrap {
-    fn number(self) -> u16 {
-        self.0
-    }
-}
-
 pub unsafe trait Interrupt: crate::util::Unborrow<Target = Self> {
     type Priority: From<u8> + Into<u8> + Copy;
-    fn number(&self) -> u16;
+    fn number(&self) -> isize;
+    fn cpuInterruptNumber(&self) -> CpuInterrupt;
     unsafe fn steal() -> Self;
 
     /// Implementation detail, do not use outside embassy crates.
@@ -551,6 +341,97 @@ pub trait InterruptExt: Interrupt {
     fn unpend(&self);
     fn get_priority(&self) -> Self::Priority;
     fn set_priority(&self, prio: Self::Priority);
+}
+
+pub mod ESP32C3_Interrupts {
+    pub use super::*;
+    pub fn enable(interrupt_number: isize, cpu_interrupt_number: CpuInterrupt) {
+        unsafe {
+            let cpu_interrupt_number = cpu_interrupt_number as isize;
+            let intr = &*INTERRUPT_CORE0::ptr();
+            let intr_map_base = intr.mac_intr_map.as_ptr();
+            intr_map_base
+                .offset(interrupt_number)
+                .write_volatile(cpu_interrupt_number as u32);
+
+            // enable interrupt
+            intr.cpu_int_enable
+                .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits()));
+        }
+    }
+    pub fn disable(interrupt: isize) {
+        unsafe {
+            let interrupt_number = interrupt as isize;
+            let intr = &*INTERRUPT_CORE0::ptr();
+            let intr_map_base = intr.mac_intr_map.as_ptr();
+            intr_map_base.offset(interrupt_number).write_volatile(0);
+        }
+    }
+    pub fn set_kind(which: CpuInterrupt, kind: InterruptKind) {
+        unsafe {
+            let intr = &*INTERRUPT_CORE0::ptr();
+            let cpu_interrupt_number = which as isize;
+
+            let interrupt_type = match kind {
+                InterruptKind::Level => 0,
+                InterruptKind::Edge => 1,
+            };
+            intr.cpu_int_type.modify(|r, w| {
+                w.bits(
+                    r.bits() & !(1 << cpu_interrupt_number)
+                        | (interrupt_type << cpu_interrupt_number),
+                )
+            });
+        }
+    }
+    pub fn set_priority(which: CpuInterrupt, priority: u32) {
+        unsafe {
+            let intr = &*INTERRUPT_CORE0::ptr();
+            let cpu_interrupt_number = which as isize;
+            let intr_prio_base = intr.cpu_int_pri_0.as_ptr();
+
+            intr_prio_base
+                .offset(cpu_interrupt_number as isize)
+                .write_volatile(priority as u32);
+        }
+    }
+    pub fn clear(which: CpuInterrupt) {
+        unsafe {
+            let cpu_interrupt_number = which as isize;
+            let intr = &*INTERRUPT_CORE0::ptr();
+            intr.cpu_int_clear
+                .write(|w| w.bits(1 << cpu_interrupt_number));
+        }
+    }
+    //TODO implement testing for these functions
+    pub fn is_enabled(cpu_interrupt_number: CpuInterrupt) -> bool {
+        unsafe {
+            let intr = &*INTERRUPT_CORE0::ptr();
+            let b = intr.cpu_int_enable.read().bits();
+            let ans = b & (1 << cpu_interrupt_number as isize);
+            ans != 0
+        }
+    }
+    pub fn is_pending(cpu_interrupt_number: CpuInterrupt) -> bool {
+        unsafe {
+            let intr = &*INTERRUPT_CORE0::ptr();
+            let b = intr.cpu_int_eip_status.read().bits();
+            let ans = b & (1 << cpu_interrupt_number as isize);
+            ans != 0
+        }
+    }
+    pub fn get_priority(which: CpuInterrupt) -> u32 {
+        unsafe {
+            let intr = &*INTERRUPT_CORE0::ptr();
+            let cpu_interrupt_number = which as isize;
+            let intr_prio_base = intr.cpu_int_pri_0.as_ptr();
+
+            let x = intr_prio_base
+                .offset(cpu_interrupt_number as isize)
+                .read_volatile();
+            return x;
+        }
+    }
 }
 
 impl<T: Interrupt + ?Sized> InterruptExt for T {
@@ -575,54 +456,51 @@ impl<T: Interrupt + ?Sized> InterruptExt for T {
 
     #[inline]
     fn enable(&self) {
-        compiler_fence(Ordering::SeqCst);
-        unsafe {
-            NVIC::unmask(NrWrap(self.number()));
-        }
+        ESP32C3_Interrupts::enable(self.number(), self.cpuInterruptNumber());
     }
 
     #[inline]
     fn disable(&self) {
-        NVIC::mask(NrWrap(self.number()));
-        compiler_fence(Ordering::SeqCst);
+        ESP32C3_Interrupts::disable(self.number());
     }
 
-    #[inline]
-    #[cfg(not(armv6m))]
+    // #[inline] TODO IMPLEMENT FOR ESP32C3
+    // #[cfg(not(armv6m))]
     fn is_active(&self) -> bool {
-        NVIC::is_active(NrWrap(self.number()))
+        // NVIC::is_active(NrWrap(self.number()))
+        return false;
     }
 
     #[inline]
     fn is_enabled(&self) -> bool {
-        NVIC::is_enabled(NrWrap(self.number()))
+        ESP32C3_Interrupts::is_enabled(self.cpuInterruptNumber())
     }
 
     #[inline]
     fn is_pending(&self) -> bool {
-        NVIC::is_pending(NrWrap(self.number()))
+        ESP32C3_Interrupts::is_pending(self.cpuInterruptNumber())
     }
 
     #[inline]
     fn pend(&self) {
-        NVIC::pend(NrWrap(self.number()))
+        // TODO implement interrupt mode
+        // NVIC::pend(NrWrap(self.number()))
     }
 
     #[inline]
     fn unpend(&self) {
-        NVIC::unpend(NrWrap(self.number()))
+        //TODO implement interrupt mode
+        // NVIC::unpend(NrWrap(self.number()))
     }
 
     #[inline]
     fn get_priority(&self) -> Self::Priority {
-        Self::Priority::from(NVIC::get_priority(NrWrap(self.number())))
+        (ESP32C3_Interrupts::get_priority(self.cpuInterruptNumber()) as u8).into()
     }
 
     #[inline]
     fn set_priority(&self, prio: Self::Priority) {
-        unsafe {
-            let mut nvic: cortex_m::peripheral::NVIC = mem::transmute(());
-            nvic.set_priority(NrWrap(self.number()), prio.into())
-        }
+        let p: u8 = prio.into();
+        unsafe { ESP32C3_Interrupts::set_priority(self.cpuInterruptNumber(), prio.into() as u32 ) }
     }
 }

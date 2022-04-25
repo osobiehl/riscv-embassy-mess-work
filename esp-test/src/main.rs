@@ -11,6 +11,8 @@ use riscv_rt::entry;
 use embassy::executor::Spawner;
 use embassy::time::{Duration, Timer};
 
+use embassy_esp32c3::{}
+
 
 #[embassy::task]
 async fn run(){

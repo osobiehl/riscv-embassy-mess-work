@@ -1,5 +1,5 @@
 [package]
-name    = "esp_test"
+name    = "embassy_esp32c3"
 version = "0.1.0"
 authors = ["osobiehl <osobiehl@me.com>"]
 edition = "2021"
@@ -13,7 +13,9 @@ nb = "1.0.0"
 embassy = { version = "0.1.0", path = "../embassy", features = ["defmt", "defmt-timestamp-uptime"] }
 futures = { version = "0.3.17", default-features = false, features = ["async-await"] }
 heapless = { version = "0.7.5", default-features = false }
-
+esp32c3 = "0.4.0"
+riscv                       = "0.7"
+critical-section = "0.2.5"
 
 [features]
 default = ["rt"]
