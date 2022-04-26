@@ -20,6 +20,7 @@ cfg_if::cfg_if! {
     else if #[cfg(target_arch="riscv32")] {
         #[path="interrupt/interrupt_riscv32.rs"]
         pub mod interrupt;
+        pub use interrupt::*;
     }
 
 }

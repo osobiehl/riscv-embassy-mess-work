@@ -203,7 +203,7 @@ pub unsafe extern "C" fn start_trap_rust_hal(trap_frame: *mut TrapFrame) {
 ///
 /// This function is called from an trap handler.
 #[doc(hidden)]
-unsafe fn handle_exception(trap_frame: *mut TrapFrame) {
+pub unsafe fn handle_exception(trap_frame: *mut TrapFrame) {
     extern "C" {
         pub fn _start_trap_atomic_rust(trap_frame: *mut riscv_atomic_emulation_trap::TrapFrame);
     }

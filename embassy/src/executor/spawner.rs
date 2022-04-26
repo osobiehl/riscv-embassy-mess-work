@@ -97,7 +97,7 @@ impl Spawner {
     /// which would require use of `-Z namespaced-features`.
     pub fn must_spawn<F>(&self, token: SpawnToken<F>) {
         unwrap!(self.spawn(token));
-    }
+   }
 
     /// Convert this Spawner to a SendSpawner. This allows you to send the
     /// spawner to other threads, but the spawner loses the ability to spawn
