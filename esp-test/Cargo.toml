@@ -13,7 +13,7 @@ panic-halt   = "0.2"
 esp32c3-hal = { package = "esp32c3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
 riscv-rt = { version = "0.8", optional = true }
 nb = "1.0.0"
-embassy = {  path = "../embassy", features = ["defmt", "defmt-timestamp-uptime", "time", "time-tick-16mhz", "nightly"] }
+embassy = {  path = "../embassy", features = [ "time", "time-tick-16mhz", "nightly"] }
 futures = { version = "0.3.17", default-features = false, features = ["async-await"] }
 heapless = { version = "0.7.5", default-features = false }
 embassy_esp32c3 = {path="../embassy-esp32c3"}

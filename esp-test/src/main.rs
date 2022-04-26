@@ -42,27 +42,18 @@ unsafe fn __make_static<T>(t: &mut T) -> &'static mut T {
         })
     }
 
-
-
-fn __embassy_main(spawner: Spawner, _p: Peripherals) -> embassy::executor::SpawnToken<impl ::core::future::Future + 'static>
+#[embassy::task]
+async fn __embassy_main(spawner: Spawner, _p: Peripherals)
 {
-    use embassy::executor::raw::TaskStorage;
-    async fn task(spawner: Spawner, _p: Peripherals){
-    // Disable watchdog timers
-        
-        let mut serial0 = Serial::new(_p.UART0).unwrap();
 
-        loop {
-            writeln!(serial0, "Hello world!").unwrap();
-            Timer::after(Duration::from_micros(1000)).await;
-        }
+        
+    let mut serial0 = Serial::new(_p.UART0).unwrap();
+    loop {
+        writeln!(serial0, "Hello world!").unwrap();
+        Timer::after(Duration::from_micros(1000)).await;
     }
-    type F = impl ::core::future::Future + 'static;
-    #[allow(clippy::declare_interior_mutable_const)]
-    const NEW_TASK: TaskStorage<F> = TaskStorage::new();
-    static POOL: [TaskStorage<F>; 1] = [NEW_TASK; 1];
-    unsafe { TaskStorage::spawn_pool(&POOL, move || task(spawner, _p)) }
 }
+
 //     #[embassy::task]
 // async fn __embassy_main(spawner: Spawner, _p: Peripherals){
 
