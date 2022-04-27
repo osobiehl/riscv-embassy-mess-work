@@ -18,14 +18,14 @@ use critical_section::CriticalSection;
 use embassy::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy::blocking_mutex::CriticalSectionMutex as Mutex;
 use embassy_esp32c3::pac::{Peripherals, UART0};
-use embassy_esp32c3::{init, rtc_cntl, timer, Serial};
+use embassy_esp32c3::{init, rtc_cntl, timer, Serial, systimer};
 use embedded_hal::prelude::_embedded_hal_watchdog_WatchdogDisable;
 
 use core::cell::{Cell, RefCell};
+use core::mem::transmute;
 use core::option::Option::{self, None, Some};
 use embassy_esp32c3::driver::{AlarmState, SysTimerDriver};
 use embassy_esp32c3::interrupt::Priority;
-use core::mem::transmute;
 // use embassy_esp32c3::{}
 
 // #[task]
@@ -45,43 +45,38 @@ const ALARM_STATE_NONE: AlarmState = AlarmState::new();
 const ALARM_COUNT: usize = 3;
 fn increment_ctr(any: *mut ()) {
     let v: usize = any as usize;
-    let res: &str = match(v){
-        1=> "interrupt 1!",
+    let res: &str = match (v) {
+        1 => "interrupt 1!",
         2 => "interrupt 2!",
-        3 =>  "interrupt 3!",
-        _ => "unknown!"
+        3 => "interrupt 3!",
+        _ => "unknown!",
     };
 
     critical_section::with(|cs| {
         let ctr = CTR.borrow(cs);
-        let  count = ctr.get();
-        ctr.set(count+1);
+        let count = ctr.get();
+        ctr.set(count + 1);
     });
     log_interrupt(res);
 }
-fn log_interrupt( msg: & str ){
+fn log_interrupt(msg: &str) {
     critical_section::with(|cs| unsafe {
         let mut serial = SERIAL.borrow(cs).borrow_mut();
         let mut serial = serial.as_mut().unwrap();
-        
+
         writeln!(serial, "{}", msg).ok();
     })
 }
-fn compare_ctr(v: usize, on_fail: &str){
+fn compare_ctr(v: usize, on_fail: &str) {
     critical_section::with(|cs| unsafe {
-        let   count = CTR.borrow(cs).get();
-        if count != v{
+        let count = CTR.borrow(cs).get();
+        if count != v {
             let mut serial = SERIAL.borrow(cs).borrow_mut();
             let mut serial = serial.as_mut().unwrap();
             writeln!(serial, "{}", on_fail).ok();
         }
-        
-        
-        
     })
 }
-
-
 
 extern "Rust" {
     fn _embassy_time_now() -> u64;
@@ -91,9 +86,7 @@ extern "Rust" {
 }
 #[riscv_rt::entry]
 fn main() -> ! {
-    
     let peripherals = init();
-
 
     let mut serial = Serial::new(peripherals.UART0).unwrap();
     writeln!(serial, "initializing driver").ok();
@@ -124,14 +117,11 @@ fn main() -> ! {
         critical_section::with(move |_cs| unsafe {
             SERIAL.get_mut().replace(Some(serial));
         });
-        
-
-
 
         _embassy_time_set_alarm_callback(alarm_1, increment_ctr, 1 as usize as *mut ());
         log_interrupt("getting current time, failure if hangs\n");
         let mut now = _embassy_time_now();
-        
+
         let to_expire = now + 30_000_000u64;
         log_interrupt("setting alarm timer in 30_000_000 counts, \nif this hangs, tests have failed\nif this loops, tests have also failed\n");
         _embassy_time_set_alarm(alarm_1, to_expire);
@@ -141,13 +131,11 @@ fn main() -> ! {
 
         let alarm_1_new = _embassy_time_allocate_alarm();
         if alarm_1_new.is_none() {
-           log_interrupt("FAIL: alarm handle should be some");
+            log_interrupt("FAIL: alarm handle should be some");
         }
         let alarm_1_new = alarm_1_new.unwrap();
         log_interrupt("can re-allocate a used timer\n");
         _embassy_time_set_alarm_callback(alarm_1_new, increment_ctr, 1 as usize as *mut ());
-
-
 
         let mut now = _embassy_time_now();
         let to_expire = now + 30_000_000u64;
@@ -157,48 +145,61 @@ fn main() -> ! {
         riscv::asm::wfi();
         compare_ctr(2, "FAIL: interrupt did not properly execute");
 
-
         log_interrupt("interrupt for passed time alarms triggers instantly\n");
         let alarm_1_new = _embassy_time_allocate_alarm();
         if alarm_1_new.is_none() {
-           log_interrupt("FAIL: alarm handle should be some");
+            log_interrupt("FAIL: alarm handle should be some");
         }
         let alarm_1_new = alarm_1_new.unwrap();
         _embassy_time_set_alarm_callback(alarm_1_new, increment_ctr, 1 as usize as *mut ());
-
-        log_interrupt("setting alarm timer in 30_000_000 counts, \nif this hangs, tests have failed\nif this loops, tests have also failed\n");
         _embassy_time_set_alarm(alarm_1_new, 0);
         //riscv::asm::wfi();
-        compare_ctr(3, "FAIL: interrupt did not properly execute");
+        compare_ctr(3, "FAIL: interrupt did not execute immediately");
+
+        log_interrupt("can trigger alarms sequentially, fails if hangs\n");
+        let alarms = [&alarm_3, &alarm_1_new, &alarm_2];
+        for a in alarms {
+            _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() + 1) as usize as *mut ())
+        }
+
+        for a in alarms {
+            let now = _embassy_time_now();
+            _embassy_time_set_alarm(*a, now + 30_000_000u64);
+            riscv::asm::wfi();
+        }
+        compare_ctr(6, "FAIL: ctr value is incorrect!");
+        log_interrupt("can set multiple alarms concurrently\n");
 
 
 
 
 
-
-        log_interrupt("can trigger multiple alarms, fails if hangs\n");
-        let alarms = [  &alarm_3, &alarm_1_new, &alarm_2,];
-        for a in alarms{
-            _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id()+1) as usize as *mut ())
+        let mut  alarms = [
+            _embassy_time_allocate_alarm().unwrap(),
+            _embassy_time_allocate_alarm().unwrap(),
+            _embassy_time_allocate_alarm().unwrap(),
+        ];
+        alarms.swap(0,2);
+        for a in alarms.iter(){
+            _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() +1) as usize as *mut ());
         }
         let now = _embassy_time_now();
-        for a in alarms{
-            _embassy_time_set_alarm( *a, now + 30_000_000u64 + a.id() as u64 * 60_000_00);
-            log_interrupt("set alarm!\n");
 
-        }
-        // riscv::asm::wfi();
-        // riscv::asm::wfi();
-        // riscv::asm::wfi();
-        compare_ctr(6, "FAIL: ctr value is incorrect!");
-        // _embassy_time_set_alarm_callback(, callback, ctx)
         
+        systimer::set_target2_alarm_from_timestamp( now +  3*30_000_000u64);
+        systimer::set_target0_alarm_from_timestamp( now +  1*30_000_000u64);
+        systimer::set_target1_alarm_from_timestamp( now +  2*30_000_000u64);
 
 
 
+        // for a in alarms.iter(){
+        //     _embassy_time_set_alarm(*a, target + (a.id() as u64 * 30_000_000u64));
+        // }
 
+
+        
+        // _embassy_time_set_alarm_callback(, callback, ctx)
     }
-
 
     // peripherals.UART0 = serial.free();
     loop {}
