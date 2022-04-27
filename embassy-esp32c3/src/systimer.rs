@@ -21,6 +21,7 @@ pub fn get_time() -> u64 {
         ((value_hi as u64) << 32) | value_lo as u64
     }
 }
+
 // TODO optimize into init() and set() portions
 pub fn set_target0_alarm_from_timestamp(timestamp: u64) {
     unsafe {
@@ -86,8 +87,8 @@ pub fn set_target1_alarm_from_timestamp(timestamp: u64) {
         });
         //5. Set SYSTIMER_TIMER_COMPx_LOAD to synchronize the alarm value (t) to COMPx, i.e. load the alarm
         systimer
-            .comp0_load
-            .write(|w| w.timer_comp0_load().set_bit());
+            .comp1_load
+            .write(|w| w.timer_comp1_load().set_bit());
         //6. Set SYSTIMER_TARGETx_WORK_EN to enable the selected COMPx. COMPx starts comparing the count
         systimer.conf.write(|w| {
             w.target1_work_en()
@@ -126,8 +127,8 @@ pub fn set_target2_alarm_from_timestamp(timestamp: u64) {
         });
         //5. Set SYSTIMER_TIMER_COMPx_LOAD to synchronize the alarm value (t) to COMPx, i.e. load the alarm
         systimer
-            .comp0_load
-            .write(|w| w.timer_comp0_load().set_bit());
+            .comp2_load
+            .write(|w| w.timer_comp2_load().set_bit());
         //6. Set SYSTIMER_TARGETx_WORK_EN to enable the selected COMPx. COMPx starts comparing the count
         systimer.conf.write(|w| {
             w.target2_work_en()

@@ -1,5 +1,5 @@
 [package]
-name    = "esp_test"
+name    = "test_time_driver"
 version = "0.1.0"
 authors = ["osobiehl <osobiehl@me.com>"]
 edition = "2021"
@@ -20,6 +20,8 @@ embassy_esp32c3 = {path="../embassy-esp32c3"}
 #embassy-macros  = { version = "0.1.0", path = "../embassy-macros", features=["esp32c3"]}
 serde = { version = "1.0.136", default-features = false }
 embedded-hal = { version = "0.2", features = ["unproven"] }
+critical-section = "0.2.5"
+riscv                       = "0.7"
 
 defmt = "0.3"
 #defmt-rtt = "0.3"

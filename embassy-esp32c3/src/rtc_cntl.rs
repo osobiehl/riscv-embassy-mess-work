@@ -5,6 +5,9 @@ pub struct RtcCntl {
 }
 
 impl RtcCntl {
+    pub fn free(self)->RTC_CNTL{
+        self.rtc_cntl
+    }
     pub fn new(rtc_cntl: RTC_CNTL) -> Self {
         Self { rtc_cntl }
     }

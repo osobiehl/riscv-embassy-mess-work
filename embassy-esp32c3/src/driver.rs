@@ -57,20 +57,20 @@ pub fn generate_systimer_interrupt_structs(
 // generate independent interrupts based on different alarm values (t) or alarm periods (δt). pg 252
 const ALARM_COUNT: usize = 3;
 
-struct AlarmState {
-    timestamp: Cell<u64>,
+pub struct AlarmState {
+    pub timestamp: Cell<u64>,
 
     // This is really a Option<(fn(*mut ()), *mut ())>
     // but fn pointers aren't allowed in const yet
-    callback: Cell<*const ()>,
-    ctx: Cell<*mut ()>,
-    allocated: Cell<bool>,
+    pub callback: Cell<*const ()>,
+    pub ctx: Cell<*mut ()>,
+    pub allocated: Cell<bool>,
 }
 
 unsafe impl Send for AlarmState {}
 
 impl AlarmState {
-    const fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             timestamp: Cell::new(u64::MAX),
             callback: Cell::new(ptr::null()),
@@ -86,10 +86,10 @@ fn disable_watchdogs() {}
 // since we have no guarantee on which of the 3 alarms will trigger first
 // we have to wrap them in an option for allocation, to see which handler is
 // available, as well as to know where to allocate each fct.
-struct SysTimerDriver {
+pub struct SysTimerDriver {
     //we wrap everything in a cell because we try to get around
     //the non-mutable design of the Driver trait
-    alarms: Mutex<[AlarmState; ALARM_COUNT]>,
+    pub alarms: Mutex<[AlarmState; ALARM_COUNT]>,
     // esp32c3 has a 48-bit timer, that should be able to count for ~3 months (conservative estimate)
 }
 
@@ -109,7 +109,7 @@ embassy::time_driver_impl!(static DRIVER: SysTimerDriver = SysTimerDriver{
 
 
 impl SysTimerDriver {
-    fn init(&'static self, irq_prio: crate::interrupt::Priority) {
+    pub fn init(&'static self, irq_prio: crate::interrupt::Priority) {
         let (mut syst0, mut syst1,mut  syst2) = generate_systimer_interrupt_structs(irq_prio);
         enable(&mut syst0);
         interrupt::ESP32C3_Interrupts::set_priority(syst0.cpu_interrupt, irq_prio as u32);
@@ -140,16 +140,19 @@ impl SysTimerDriver {
     }
 
     fn clear_target0(&self) {
-        ESP32C3_Interrupts::clear(interrupt::CpuInterrupt::Interrupt1);
         systimer::clear_target0_interrupt();
+
+        ESP32C3_Interrupts::clear(interrupt::CpuInterrupt::Interrupt1);
     }
     fn clear_target1(&self) {
-        ESP32C3_Interrupts::clear(interrupt::CpuInterrupt::Interrupt2);
         systimer::clear_target1_interrupt();
+
+        ESP32C3_Interrupts::clear(interrupt::CpuInterrupt::Interrupt2);
     }
     fn clear_target2(&self) {
+                systimer::clear_target2_interrupt();
+
         ESP32C3_Interrupts::clear(interrupt::CpuInterrupt::Interrupt3);
-        systimer::clear_target2_interrupt();
     }
     fn trigger_alarm(&self, id: u8, cs: CriticalSection) {
         let alarm = self.get_alarm(cs, id);
@@ -194,7 +197,6 @@ impl SysTimerDriver {
         systimer::set_target2_alarm_from_timestamp(timestamp)
     }
     // first clear interrupt, then keep going
-    pub fn on_interrupt_target0(&self) {}
 }
 
 impl Driver for SysTimerDriver {
@@ -202,7 +204,7 @@ impl Driver for SysTimerDriver {
         self.get_time()
     }
     unsafe fn allocate_alarm(& self) -> Option<AlarmHandle> {
-        critical_section::with(|_cs| unsafe  {
+        return critical_section::with(|_cs| unsafe  {
             let alarms = self.alarms.borrow(_cs);
             for i in 0..ALARM_COUNT {
 
@@ -215,7 +217,6 @@ impl Driver for SysTimerDriver {
             }
             return Option::None;
         });
-        return Option::None;
     }
     fn set_alarm_callback(&self, alarm: AlarmHandle, callback: fn(*mut ()), ctx: *mut ()) {
         critical_section::with(|cs| {
@@ -227,6 +228,12 @@ impl Driver for SysTimerDriver {
     }
     fn set_alarm(&self, alarm: AlarmHandle, timestamp: u64) {
         critical_section::with(|cs| {
+            let now = self.now();
+            if timestamp < now {
+                self.deallocate_alarm(alarm.id(), cs);
+                self.trigger_alarm(alarm.id(), cs);
+                return;
+            }
             let alarm_state = self.get_alarm(cs, alarm.id());
             alarm_state.timestamp.set(timestamp);
             match alarm.id() {

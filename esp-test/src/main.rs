@@ -14,8 +14,10 @@ use embassy;
 use embassy::executor::Spawner;
 use embassy::time::{Duration, Timer};
 // use embassy_macros::{main, task};
-use embassy_esp32c3::{Serial, init};
+use embassy_esp32c3::{Serial, init, timer, rtc_cntl};
 use embassy_esp32c3::pac::{UART0, Peripherals};
+use embedded_hal::prelude::_embedded_hal_watchdog_WatchdogDisable;
+
 
 // use embassy_esp32c3::{}
 
@@ -32,11 +34,25 @@ unsafe fn __make_static<T>(t: &mut T) -> &'static mut T {
 }
 #[riscv_rt::entry]
     fn main() -> ! {
-        let peripherals = init();
+        let mut peripherals = init();
+
+        let mut serial = Serial::new(peripherals.UART0).unwrap();
+        writeln!(serial, "calling executor.run").ok();
+
+        peripherals.UART0 = serial.free();
+
+
+        let mut s0 = Serial::new(peripherals.UART0).unwrap();
+        writeln!(s0, "borrow checking").ok();
+        
 
         let mut executor = embassy::executor::Executor::new();
+        writeln!(s0, "allocated executor!").ok();
         let executor = unsafe { __make_static(&mut executor) };
+        
 
+
+        peripherals.UART0 = s0.free();
         executor.run(|spawner| {
             spawner.must_spawn(__embassy_main(spawner, peripherals));
         })

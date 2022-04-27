@@ -336,23 +336,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "esp_test"
-version = "0.1.0"
-dependencies = [
- "defmt",
- "embassy",
- "embassy_esp32c3",
- "embedded-hal 0.2.7",
- "esp32c3-hal",
- "futures",
- "heapless",
- "nb 1.0.0",
- "panic-halt",
- "riscv-rt",
- "serde",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -796,6 +779,25 @@ dependencies = [
  "proc-macro2 1.0.37",
  "quote 1.0.17",
  "unicode-xid 0.2.2",
+]
+
+[[package]]
+name = "test_time_driver"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "defmt",
+ "embassy",
+ "embassy_esp32c3",
+ "embedded-hal 0.2.7",
+ "esp32c3-hal",
+ "futures",
+ "heapless",
+ "nb 1.0.0",
+ "panic-halt",
+ "riscv 0.7.0",
+ "riscv-rt",
+ "serde",
 ]
 
 [[package]]
