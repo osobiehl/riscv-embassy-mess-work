@@ -1,4 +1,4 @@
-[target.riscv32imc-unknown-none-elf]
+[target.'cfg(all(target_arch = "riscv32", target_os = "none"))']
 runner = "espflash --monitor"
 rustflags = [
   "-C", "link-arg=-Tlinkall.x"

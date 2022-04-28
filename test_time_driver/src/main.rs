@@ -26,6 +26,7 @@ use core::mem::transmute;
 use core::option::Option::{self, None, Some};
 use embassy_esp32c3::driver::{AlarmState, SysTimerDriver};
 use embassy_esp32c3::interrupt::Priority;
+use embassy_esp32c3::config;
 // use embassy_esp32c3::{}
 
 // #[task]
@@ -86,7 +87,7 @@ extern "Rust" {
 }
 #[riscv_rt::entry]
 fn main() -> ! {
-    let peripherals = init();
+    let peripherals = init(config::Config::default());
 
     let mut serial = Serial::new(peripherals.UART0).unwrap();
     writeln!(serial, "initializing driver").ok();
@@ -157,7 +158,7 @@ fn main() -> ! {
         compare_ctr(3, "FAIL: interrupt did not execute immediately");
 
         log_interrupt("can trigger alarms sequentially, fails if hangs\n");
-        let alarms = [&alarm_3, &alarm_1_new, &alarm_2];
+        let alarms = [ &alarm_1_new, &alarm_2, &alarm_3,];
         for a in alarms {
             _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() + 1) as usize as *mut ())
         }

@@ -20,12 +20,26 @@ pub mod interrupt {
 pub mod pac {
     pub use esp32c3::*;
 }
+pub mod config{
+    #[non_exhaustive]
+    pub struct Config{
+        pub time_interrupt_priority: crate::interrupt::Priority
+    }
+    impl Default for Config{
+        fn default() -> Self {
+            Self {
+                time_interrupt_priority: crate::interrupt::Priority::Priority1
+            }
+        }
+    }
+}
+
 use embedded_hal::prelude::_embedded_hal_watchdog_WatchdogDisable;
-pub fn init() -> Peripherals {
+pub fn init(config: config::Config) -> Peripherals {
     //steal peripherals to
     unsafe {
         //TODO allow users to specify their time driver priority
-        driver::init(interrupt::Priority::Priority1);
+        driver::init(config.time_interrupt_priority);
         // let serial = timer::Timer::new(pac::TIMG0 { _marker: val });
         let mut peripherals = Peripherals::steal();
         let mut rtc_cntl = rtc_cntl::RtcCntl::new(peripherals.RTC_CNTL);
@@ -335,3 +349,5 @@ pub fn mp_hook() -> bool {
 fn gpio_intr_enable(int_enable: bool, nmi_enable: bool) -> u8 {
     int_enable as u8 | ((nmi_enable as u8) << 1)
 }
+
+

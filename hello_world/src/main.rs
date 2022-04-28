@@ -19,50 +19,9 @@ use embassy_esp32c3::pac::{UART0, Peripherals};
 use embedded_hal::prelude::_embedded_hal_watchdog_WatchdogDisable;
 
 
-// use embassy_esp32c3::{}
 
-
-// #[task]
-// async fn run(){
-//     static  peripherals: Peripherals = Peripherals::take().unwrap();
-//     static serial0: Serial<UART0> = Serial::new(peripherals.UART0).unwrap();
-//     writeln!(serial0, "tick!");
-//     Timer::after(Duration::from_secs(1)).await;
-// }
-unsafe fn __make_static<T>(t: &mut T) -> &'static mut T {
-    ::core::mem::transmute(t)
-}
-#[riscv_rt::entry]
-    fn main() -> ! {
-        let mut peripherals = init();
-
-        let mut serial = Serial::new(peripherals.UART0).unwrap();
-        writeln!(serial, "calling executor.run").ok();
-
-        peripherals.UART0 = serial.free();
-
-
-        let mut s0 = Serial::new(peripherals.UART0).unwrap();
-        writeln!(s0, "borrow checking").ok();
-        
-
-        let mut executor = embassy::executor::Executor::new();
-        writeln!(s0, "allocated executor!").ok();
-        let executor = unsafe { __make_static(&mut executor) };
-        
-
-
-        peripherals.UART0 = s0.free();
-        executor.run(|spawner| {
-            spawner.must_spawn(__embassy_main(spawner, peripherals));
-        })
-    }
-
-#[embassy::task]
-async fn __embassy_main(spawner: Spawner, _p: Peripherals)
-{
-
-        
+#[embassy::main]
+async fn main(spawner: Spawner, _p: Peripherals){
     let mut serial0 = Serial::new(_p.UART0).unwrap();
     loop {
         writeln!(serial0, "Hello world!").unwrap();

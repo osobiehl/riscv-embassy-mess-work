@@ -19,7 +19,7 @@ flavors = [
     { name = "thumbv8m.base-none-eabi",   target = "thumbv8m.base-none-eabi",    features = [] },
     { name = "thumbv8m.main-none-eabi",   target = "thumbv8m.main-none-eabi",    features = [] },
     { name = "thumbv8m.main-none-eabihf", target = "thumbv8m.main-none-eabihf",  features = [] },
-    { name = "riscv32imc-unknown-none-elf", target = "riscv32imc-unknown-none-elf",  features = ["arm"] },
+    { name = "riscv32imc-unknown-none-elf", target = "riscv32imc-unknown-none-elf",  features = ["riscv32"] },
 ]
 
 [features]
