@@ -336,23 +336,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "esp_test"
-version = "0.1.0"
-dependencies = [
- "defmt",
- "embassy",
- "embassy_esp32c3",
- "embedded-hal 0.2.7",
- "esp32c3-hal",
- "futures",
- "heapless",
- "nb 1.0.0",
- "panic-halt",
- "riscv-rt",
- "serde",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -450,6 +433,23 @@ dependencies = [
  "hash32",
  "spin",
  "stable_deref_trait",
+]
+
+[[package]]
+name = "hello_world"
+version = "0.1.0"
+dependencies = [
+ "defmt",
+ "embassy",
+ "embassy_esp32c3",
+ "embedded-hal 0.2.7",
+ "esp32c3-hal",
+ "futures",
+ "heapless",
+ "nb 1.0.0",
+ "panic-halt",
+ "riscv-rt",
+ "serde",
 ]
 
 [[package]]

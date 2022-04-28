@@ -1,5 +1,5 @@
 [package]
-name    = "esp_test"
+name    = "hello_world"
 version = "0.1.0"
 authors = ["osobiehl <osobiehl@me.com>"]
 edition = "2021"
