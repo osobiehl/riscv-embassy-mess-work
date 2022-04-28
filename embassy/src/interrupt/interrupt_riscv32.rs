@@ -1,4 +1,4 @@
-use esp32c3_pac::{Interrupt as Interrupt_esp32c3, INTERRUPT_CORE0};
+use esp32c3_pac::{Interrupt as Interrupt_esp32c3, INTERRUPT_CORE0, SYSTEM};
 use riscv::register::mcause;
 //TODO SETUP BOOT LINKING
 // User code shouldn't usually take the mutable TrapFrame or the TrapFrame in
@@ -8,7 +8,7 @@ extern "C" {
     fn interrupt1(frame: &mut TrapFrame);
     fn interrupt2(frame: &mut TrapFrame);
     fn interrupt3(frame: &mut TrapFrame);
-    fn interrupt4(frame: &mut TrapFrame);
+    // fn interrupt4(frame: &mut TrapFrame);
     fn interrupt5(frame: &mut TrapFrame);
     fn interrupt6(frame: &mut TrapFrame);
     fn interrupt7(frame: &mut TrapFrame);
@@ -49,12 +49,12 @@ pub enum InterruptKind {
 /// Enumeration of available CPU interrupts.
 /// It is possible to create a handler for each of the interrupts. (e.g.
 /// `interrupt3`)
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 pub enum CpuInterrupt {
     Interrupt1 = 1,
     Interrupt2,
     Interrupt3,
-    Interrupt4,
+    Reserved_Interrupt4,
     Interrupt5,
     Interrupt6,
     Interrupt7,
@@ -83,7 +83,7 @@ pub enum CpuInterrupt {
     Interrupt30,
     Interrupt31,
 }
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 pub enum Priority {
     None,
     Priority1,
@@ -102,7 +102,6 @@ pub enum Priority {
     Priority14,
     Priority15,
 }
-
 
 /// Registers saved in trap handler
 #[doc(hidden)]
@@ -143,6 +142,38 @@ pub struct TrapFrame {
     pub sp: usize,
 }
 
+pub unsafe fn enable_software_event() {
+    let intr = &*INTERRUPT_CORE0::ptr();
+    intr.cpu_intr_from_cpu_0_map
+        .modify(|_, w| w.cpu_intr_from_cpu_0_map().bits(4));
+    intr.cpu_int_enable
+        .modify(|r, w| w.bits((1 << 4) | r.bits()));
+    ESP32C3_Interrupts::set_priority(
+        CpuInterrupt::Reserved_Interrupt4,
+        Priority::Priority1 as u32,
+    );
+    ESP32C3_Interrupts::set_kind(CpuInterrupt::Reserved_Interrupt4, InterruptKind::Level);
+}
+
+pub unsafe fn trigger_software_event() {
+    let system = &*SYSTEM::ptr();
+    system
+        .cpu_intr_from_cpu_0
+        .modify(|_, w| w.cpu_intr_from_cpu_0().set_bit());
+}
+pub unsafe fn remove_software_event() {
+    let system = &*SYSTEM::ptr();
+    system
+        .cpu_intr_from_cpu_0
+        .modify(|_, w| w.cpu_intr_from_cpu_0().clear_bit());
+    ESP32C3_Interrupts::clear(CpuInterrupt::Reserved_Interrupt4);
+}
+#[no_mangle]
+pub fn interrupt4(frame: &mut TrapFrame) {
+    unsafe {
+        remove_software_event();
+    }
+}
 /// # Safety
 ///
 /// This function is called from an assembly trap handler.
@@ -153,6 +184,7 @@ pub unsafe extern "C" fn start_trap_rust_hal(trap_frame: *mut TrapFrame) {
     extern "C" {
         pub fn DefaultHandler();
     }
+    // #[no_mangle]
 
     let cause = mcause::read();
     if cause.is_exception() {
@@ -501,6 +533,6 @@ impl<T: Interrupt + ?Sized> InterruptExt for T {
     #[inline]
     fn set_priority(&self, prio: Self::Priority) {
         let p: u8 = prio.into();
-        unsafe { ESP32C3_Interrupts::set_priority(self.cpuInterruptNumber(), prio.into() as u32 ) }
+        unsafe { ESP32C3_Interrupts::set_priority(self.cpuInterruptNumber(), prio.into() as u32) }
     }
 }

@@ -1,4 +1,5 @@
 #![no_std]
+use embassy::interrupt::enable_software_event;
 use esp32c3::Peripherals;
 // use esp32;
 pub mod serial;
@@ -13,7 +14,7 @@ pub mod interrupt {
     pub use esp32c3::Interrupt as interrupt_source;
 
     pub use embassy::interrupt::{
-        declare, take, CpuInterrupt, ESP32C3_Interrupts, Interrupt, InterruptKind, Priority,
+        declare, take, CpuInterrupt, ESP32C3_Interrupts, Interrupt, InterruptKind, Priority, enable_software_event
     };
     // pub use embassy_hal_common::interrupt::Priority3 as Priority;
 }
@@ -38,6 +39,7 @@ use embedded_hal::prelude::_embedded_hal_watchdog_WatchdogDisable;
 pub fn init(config: config::Config) -> Peripherals {
     //steal peripherals to
     unsafe {
+        enable_software_event();
         //TODO allow users to specify their time driver priority
         driver::init(config.time_interrupt_priority);
         // let serial = timer::Timer::new(pac::TIMG0 { _marker: val });

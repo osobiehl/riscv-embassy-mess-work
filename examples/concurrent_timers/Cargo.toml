@@ -1,0 +1,31 @@
+[package]
+name    = "concurrent_timers"
+version = "0.1.0"
+authors = ["osobiehl <osobiehl@me.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+
+
+
+[dependencies]
+panic-halt   = "0.2"
+esp32c3-hal = { package = "esp32c3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
+riscv-rt = { version = "0.8", optional = true }
+nb = "1.0.0"
+embassy = {  path = "../../embassy", features = [ "time", "time-tick-16mhz", "nightly"] }
+futures = { version = "0.3.17", default-features = false, features = ["async-await"] }
+heapless = { version = "0.7.5", default-features = false }
+embassy_esp32c3 = {path="../../embassy-esp32c3"}
+#embassy-macros  = { version = "0.1.0", path = "../../embassy-macros", features=["esp32c3"]}
+serde = { version = "1.0.136", default-features = false }
+embedded-hal = { version = "0.2", features = ["unproven"] }
+critical-section = "0.2.5"
+
+defmt = "0.3"
+#defmt-rtt = "0.3"
+
+[features]
+default = ["nightly"]
+nightly = [ "riscv-rt" ]
+rt = ["riscv-rt"]

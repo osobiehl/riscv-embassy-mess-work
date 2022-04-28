@@ -3,7 +3,7 @@ use core::ptr;
 use riscv::register::{mcause, mip};
 
 use super::{raw, Spawner};
-use crate::interrupt::{Interrupt, InterruptExt};
+use crate::interrupt::{Interrupt, InterruptExt, trigger_software_event};
 
 /// Thread mode executor, using WFE/SEV.
 ///
@@ -25,7 +25,7 @@ impl Executor {
     pub fn new() -> Self {
         Self {
             //TODO implement sev() for riscv using asm or one of software interrupts as synthetic alert
-            inner: raw::Executor::new(|_| {}, ptr::null_mut()),
+            inner: raw::Executor::new(|_| unsafe {trigger_software_event()}, ptr::null_mut()),
             not_send: PhantomData,
         }
     }

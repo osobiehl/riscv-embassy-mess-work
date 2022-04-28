@@ -15,7 +15,7 @@ A quick and messy port of the Embassy Rust framework  for RISCV esp32c3 monitors
 This project uses `cargo espflash` to flash an ESP32C3 microcontroller, you can install it by running `cargo install cargo-espflash`
 espflash should detect the proper baud-rate and device, in case it does not, please refer to the documentation of `cargo-espflash`
 ### Building + Flashing
-Building and flashing is done by going into the desired example directory, e.g `cd hello_world` and then running `cargo espflash --monitor` . This should also provide a monitoring output to show written results
+Building and flashing is done by going into the desired example directory, e.g `cd examples/hello_world` and then running `cargo espflash --monitor` . This should also provide a monitoring output to show written results
 
 ## Testing
 

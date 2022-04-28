@@ -20,14 +20,15 @@ cfg_if::cfg_if! {
     else if #[cfg(target_arch="riscv32")] {
         #[path="interrupt/interrupt_riscv32.rs"]
         pub mod interrupt;
-        pub use interrupt::*;
+        // pub use interrupt::*;
+
     }
 
 }
 
 
-#[cfg(cortex_m)]
-pub mod interrupt;
+// #[cfg(cortex_m)]
+// pub mod interrupt;
 pub mod io;
 pub mod mutex;
 #[cfg(feature = "time")]

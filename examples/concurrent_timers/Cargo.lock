@@ -72,6 +72,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "concurrent_timers"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "defmt",
+ "embassy",
+ "embassy_esp32c3",
+ "embedded-hal 0.2.7",
+ "esp32c3-hal",
+ "futures",
+ "heapless",
+ "nb 1.0.0",
+ "panic-halt",
+ "riscv-rt",
+ "serde",
+]
+
+[[package]]
 name = "cortex-m"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -433,23 +451,6 @@ dependencies = [
  "hash32",
  "spin",
  "stable_deref_trait",
-]
-
-[[package]]
-name = "hello_world"
-version = "0.1.0"
-dependencies = [
- "defmt",
- "embassy",
- "embassy_esp32c3",
- "embedded-hal 0.2.7",
- "esp32c3-hal",
- "futures",
- "heapless",
- "nb 1.0.0",
- "panic-halt",
- "riscv-rt",
- "serde",
 ]
 
 [[package]]
