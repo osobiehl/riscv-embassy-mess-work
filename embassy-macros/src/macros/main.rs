@@ -84,7 +84,7 @@ pub fn run(args: syn::AttributeArgs, f: syn::ItemFn) -> Result<TokenStream, Toke
 
 
 
-    #[cfg(cortex_m)]
+    #[cfg(feature="arm")]
     let main = {
         let config = args
             .config
@@ -123,7 +123,7 @@ pub fn run(args: syn::AttributeArgs, f: syn::ItemFn) -> Result<TokenStream, Toke
         }
     };
     // TODO FIX
-    // #[cfg(target_arch="riscv32")]
+    #[cfg(all(not(feature="arm"), not(feature="std"), not(feature="wasm")))]
     let main = {
         let config = args
             .config
