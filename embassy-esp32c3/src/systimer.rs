@@ -51,11 +51,12 @@ pub fn set_target0_alarm_from_timestamp(timestamp: u64) {
             .comp0_load
             .write(|w| w.timer_comp0_load().set_bit());
         //6. Set SYSTIMER_TARGETx_WORK_EN to enable the selected COMPx. COMPx starts comparing the count
-        systimer.conf.write(|w| {
+        systimer.conf.modify(|_r,w| {
             w.target0_work_en()
                 .set_bit()
                 .timer_unit0_core0_stall_en()
                 .clear_bit()
+            
         });
         // 7. Set SYSTIMER_TARGETx_INT_ENA to enable timer interrupt. When Unitn counts to the alarm value (t), a
         // SYSTIMER_TARGETx_INT interrupt is triggered
@@ -90,7 +91,7 @@ pub fn set_target1_alarm_from_timestamp(timestamp: u64) {
             .comp1_load
             .write(|w| w.timer_comp1_load().set_bit());
         //6. Set SYSTIMER_TARGETx_WORK_EN to enable the selected COMPx. COMPx starts comparing the count
-        systimer.conf.write(|w| {
+        systimer.conf.modify(|_, w| {
             w.target1_work_en()
                 .set_bit()
                 .timer_unit0_core0_stall_en()
@@ -130,7 +131,7 @@ pub fn set_target2_alarm_from_timestamp(timestamp: u64) {
             .comp2_load
             .write(|w| w.timer_comp2_load().set_bit());
         //6. Set SYSTIMER_TARGETx_WORK_EN to enable the selected COMPx. COMPx starts comparing the count
-        systimer.conf.write(|w| {
+        systimer.conf.modify(|_, w| {
             w.target2_work_en()
                 .set_bit()
                 .timer_unit0_core0_stall_en()
