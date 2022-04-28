@@ -60,7 +60,7 @@ pub fn set_target0_alarm_from_timestamp(timestamp: u64) {
         });
         // 7. Set SYSTIMER_TARGETx_INT_ENA to enable timer interrupt. When Unitn counts to the alarm value (t), a
         // SYSTIMER_TARGETx_INT interrupt is triggered
-        systimer.int_ena.write(|w| w.target0_int_ena().set_bit());
+        systimer.int_ena.modify(|_, w| w.target0_int_ena().set_bit());
     }
 }
 
@@ -99,7 +99,7 @@ pub fn set_target1_alarm_from_timestamp(timestamp: u64) {
         });
         // 7. Set SYSTIMER_TARGETx_INT_ENA to enable timer interrupt. When Unitn counts to the alarm value (t), a
         // SYSTIMER_TARGETx_INT interrupt is triggered
-        systimer.int_ena.write(|w| w.target1_int_ena().set_bit());
+        systimer.int_ena.modify(|_, w| w.target1_int_ena().set_bit());
     }
 }
 
@@ -139,7 +139,8 @@ pub fn set_target2_alarm_from_timestamp(timestamp: u64) {
         });
         // 7. Set SYSTIMER_TARGETx_INT_ENA to enable timer interrupt. When Unitn counts to the alarm value (t), a
         // SYSTIMER_TARGETx_INT interrupt is triggered
-        systimer.int_ena.write(|w| w.target2_int_ena().set_bit());
+        systimer.int_ena.modify(|_, w| w.target2_int_ena().set_bit());
+        // systimer.int_ena.write(|w| );
     }
 }
 

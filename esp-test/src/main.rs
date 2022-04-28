@@ -66,7 +66,7 @@ async fn __embassy_main(spawner: Spawner, _p: Peripherals)
     let mut serial0 = Serial::new(_p.UART0).unwrap();
     loop {
         writeln!(serial0, "Hello world!").unwrap();
-        Timer::after(Duration::from_micros(1000)).await;
+        Timer::after(Duration::from_micros(1000_000)).await;
     }
 }
 

@@ -18,7 +18,7 @@ use critical_section::CriticalSection;
 use embassy::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy::blocking_mutex::CriticalSectionMutex as Mutex;
 use embassy_esp32c3::pac::{Peripherals, UART0};
-use embassy_esp32c3::{init, rtc_cntl, timer, Serial, systimer};
+use embassy_esp32c3::{init, rtc_cntl, systimer, timer, Serial};
 use embedded_hal::prelude::_embedded_hal_watchdog_WatchdogDisable;
 
 use core::cell::{Cell, RefCell};
@@ -170,34 +170,28 @@ fn main() -> ! {
         compare_ctr(6, "FAIL: ctr value is incorrect!");
         log_interrupt("can set multiple alarms concurrently\n");
 
-
-
-
-
-        let mut  alarms = [
+        let mut alarms = [
             _embassy_time_allocate_alarm().unwrap(),
             _embassy_time_allocate_alarm().unwrap(),
             _embassy_time_allocate_alarm().unwrap(),
         ];
-        alarms.swap(0,2);
-        for a in alarms.iter(){
-            _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() +1) as usize as *mut ());
+        alarms.swap(0, 2);
+        for a in alarms.iter() {
+            _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() + 1) as usize as *mut ());
         }
         let now = _embassy_time_now();
 
-        
-        systimer::set_target2_alarm_from_timestamp( now +  3*30_000_000u64);
-        systimer::set_target0_alarm_from_timestamp( now +  1*30_000_000u64);
-        systimer::set_target1_alarm_from_timestamp( now +  2*30_000_000u64);
+        for a in alarms.iter() {
+            _embassy_time_set_alarm(*a, now + ((a.id() + 1) as u64 * 30_000_000u64));
+        }
 
+        riscv::asm::wfi();
+        riscv::asm::wfi();
+        riscv::asm::wfi();
+        compare_ctr(9, "FAIL: ctr value is incorrect!");
 
+        log_interrupt("DONE!")
 
-        // for a in alarms.iter(){
-        //     _embassy_time_set_alarm(*a, target + (a.id() as u64 * 30_000_000u64));
-        // }
-
-
-        
         // _embassy_time_set_alarm_callback(, callback, ctx)
     }
 
