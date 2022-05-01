@@ -29,13 +29,13 @@ impl TimerQueue {
             head: Cell::new(ptr::null_mut()),
         }
     }
-
+    // if task is already in queue: do nothing
     pub(crate) unsafe fn update(&self, p: NonNull<TaskHeader>) {
         let task = p.as_ref();
         if task.expires_at.get() != Instant::MAX {
             let old_state = task.state.fetch_or(STATE_TIMER_QUEUED, Ordering::AcqRel);
             let is_new = old_state & STATE_TIMER_QUEUED == 0;
-
+            //if task is new (not in timer queue), add it to timer Queue
             if is_new {
                 task.timer_queue_item.next.set(self.head.get());
                 self.head.set(p.as_ptr());
@@ -77,9 +77,11 @@ impl TimerQueue {
             let task = &*p.as_ptr();
             if f(p) {
                 // Skip to next
+                //change (pointer to a Cell<*mut TaskHeader>) to point to next element
                 prev = &task.timer_queue_item.next;
             } else {
                 // Remove it
+                //set the element inside the cell to the next item
                 prev.set(task.timer_queue_item.next.get());
                 task.state.fetch_and(!STATE_TIMER_QUEUED, Ordering::AcqRel);
             }

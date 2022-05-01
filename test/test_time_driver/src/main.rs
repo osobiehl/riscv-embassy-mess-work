@@ -191,6 +191,26 @@ fn main() -> ! {
         riscv::asm::wfi();
         compare_ctr(9, "FAIL: ctr value is incorrect!");
 
+        log_interrupt("can set multiple alarms for very close time\n");
+        let mut alarms = [
+            _embassy_time_allocate_alarm().unwrap(),
+            _embassy_time_allocate_alarm().unwrap(),
+            _embassy_time_allocate_alarm().unwrap(),
+        ];
+        for a in alarms.iter() {
+            _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() + 1) as usize as *mut ());
+        }
+        let now = _embassy_time_now();
+
+        for a in alarms.iter() {
+            _embassy_time_set_alarm(*a, now + 60_000_000u64);
+        }
+
+        riscv::asm::wfi();
+        riscv::asm::wfi();
+        riscv::asm::wfi();
+        compare_ctr(12, "FAIL: ctr value is incorrect!");
+
         log_interrupt("DONE!")
 
         // _embassy_time_set_alarm_callback(, callback, ctx)

@@ -12,6 +12,8 @@ pub mod blocking_mutex;
 pub mod channel;
 pub mod executor;
 
+#[cfg(target_arch="riscv32")]
+
 cfg_if::cfg_if! {
     if #[cfg(cortex_m)] {
         #[path="interrupt/interrupt.rs"]

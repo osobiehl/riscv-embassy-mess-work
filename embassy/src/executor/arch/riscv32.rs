@@ -24,7 +24,7 @@ impl Executor {
     /// Create a new Executor.
     pub fn new() -> Self {
         Self {
-            //TODO implement sev() for riscv using asm or one of software interrupts as synthetic alert
+            //using artificially triggered software event
             inner: raw::Executor::new(|_| unsafe {trigger_software_event()}, ptr::null_mut()),
             not_send: PhantomData,
         }
