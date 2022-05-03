@@ -1,9 +1,14 @@
-use core::marker::PhantomData;
+use atomic_polyfill::{AtomicBool, Ordering};
+use core::{marker::PhantomData};
 use core::ptr;
 use riscv::register::{mcause, mip};
 
 use super::{raw, Spawner};
-use crate::interrupt::{Interrupt, InterruptExt, trigger_software_event};
+use crate::channel::Signal;
+use crate::interrupt::{trigger_software_event, Interrupt, InterruptExt};
+
+/// global atomic used to keep track of whether there is work to do since sev() is not available on RISCV
+static Signal_Work_Thread_Mode: AtomicBool = AtomicBool::new(false);
 
 /// Thread mode executor, using WFE/SEV.
 ///
@@ -25,7 +30,12 @@ impl Executor {
     pub fn new() -> Self {
         Self {
             //using artificially triggered software event
-            inner: raw::Executor::new(|_| unsafe {trigger_software_event()}, ptr::null_mut()),
+            inner: raw::Executor::new(
+                |_| unsafe {
+                    Signal_Work_Thread_Mode.store(true, Ordering::AcqRel);
+                },
+                ptr::null_mut(),
+            ),
             not_send: PhantomData,
         }
     }
@@ -52,8 +62,16 @@ impl Executor {
         init(self.inner.spawner());
 
         loop {
-            unsafe { self.inner.poll() };
-            unsafe { riscv::asm::wfi() }
+            unsafe {
+                self.inner.poll();
+                // we do not care about race conditions between the load and store operations, interrupts
+                //will only set this value to true.
+                if Signal_Work_Thread_Mode.load(Ordering::AcqRel){
+                    Signal_Work_Thread_Mode.store(false,  Ordering::AcqRel);
+                    continue;
+                }
+                riscv::asm::wfi();
+            }
         }
     }
 }

@@ -176,7 +176,7 @@ impl SysTimerDriver {
             _ => panic!(),
         };
         critical_section::with( |cs| {
-            self.deallocate_alarm(id, cs);
+            // self.deallocate_alarm(id, cs);
             self.trigger_alarm(id, cs);
         })
         
@@ -230,7 +230,7 @@ impl Driver for SysTimerDriver {
         critical_section::with(|cs| {
             let now = self.now();
             if timestamp < now {
-                self.deallocate_alarm(alarm.id(), cs);
+                // self.deallocate_alarm(alarm.id(), cs);
                 self.trigger_alarm(alarm.id(), cs);
                 return;
             }

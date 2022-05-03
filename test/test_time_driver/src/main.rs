@@ -130,35 +130,28 @@ fn main() -> ! {
         compare_ctr(1, "FAIL: interrupt did not properly execute");
         log_interrupt("alarm deallocation leaves frees alarm slots\n");
 
-        let alarm_1_new = _embassy_time_allocate_alarm();
-        if alarm_1_new.is_none() {
-            log_interrupt("FAIL: alarm handle should be some");
-        }
-        let alarm_1_new = alarm_1_new.unwrap();
+        
         log_interrupt("can re-allocate a used timer\n");
-        _embassy_time_set_alarm_callback(alarm_1_new, increment_ctr, 1 as usize as *mut ());
+        _embassy_time_set_alarm_callback(alarm_1, increment_ctr, 1 as usize as *mut ());
 
         let mut now = _embassy_time_now();
         let to_expire = now + 30_000_000u64;
 
         log_interrupt("setting alarm timer in 30_000_000 counts, \nif this hangs, tests have failed\nif this loops, tests have also failed\n");
-        _embassy_time_set_alarm(alarm_1_new, to_expire);
+        _embassy_time_set_alarm(alarm_1, to_expire);
         riscv::asm::wfi();
         compare_ctr(2, "FAIL: interrupt did not properly execute");
 
         log_interrupt("interrupt for passed time alarms triggers instantly\n");
-        let alarm_1_new = _embassy_time_allocate_alarm();
-        if alarm_1_new.is_none() {
-            log_interrupt("FAIL: alarm handle should be some");
-        }
-        let alarm_1_new = alarm_1_new.unwrap();
-        _embassy_time_set_alarm_callback(alarm_1_new, increment_ctr, 1 as usize as *mut ());
-        _embassy_time_set_alarm(alarm_1_new, 0);
+        
+
+        _embassy_time_set_alarm_callback(alarm_1, increment_ctr, 1 as usize as *mut ());
+        _embassy_time_set_alarm(alarm_1, 0);
         //riscv::asm::wfi();
         compare_ctr(3, "FAIL: interrupt did not execute immediately");
 
         log_interrupt("can trigger alarms sequentially, fails if hangs\n");
-        let alarms = [ &alarm_1_new, &alarm_2, &alarm_3,];
+        let mut  alarms = [ &alarm_1, &alarm_2, &alarm_3,];
         for a in alarms {
             _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() + 1) as usize as *mut ())
         }
@@ -171,19 +164,14 @@ fn main() -> ! {
         compare_ctr(6, "FAIL: ctr value is incorrect!");
         log_interrupt("can set multiple alarms concurrently\n");
 
-        let mut alarms = [
-            _embassy_time_allocate_alarm().unwrap(),
-            _embassy_time_allocate_alarm().unwrap(),
-            _embassy_time_allocate_alarm().unwrap(),
-        ];
         alarms.swap(0, 2);
         for a in alarms.iter() {
-            _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() + 1) as usize as *mut ());
+            _embassy_time_set_alarm_callback(**a, increment_ctr, (a.id() + 1) as usize as *mut ());
         }
         let now = _embassy_time_now();
 
         for a in alarms.iter() {
-            _embassy_time_set_alarm(*a, now + ((a.id() + 1) as u64 * 30_000_000u64));
+            _embassy_time_set_alarm(**a, now + ((a.id() + 1) as u64 * 30_000_000u64));
         }
 
         riscv::asm::wfi();
@@ -192,23 +180,17 @@ fn main() -> ! {
         compare_ctr(9, "FAIL: ctr value is incorrect!");
 
         log_interrupt("can set multiple alarms for very close time\n");
-        let mut alarms = [
-            _embassy_time_allocate_alarm().unwrap(),
-            _embassy_time_allocate_alarm().unwrap(),
-            _embassy_time_allocate_alarm().unwrap(),
-        ];
+
         for a in alarms.iter() {
-            _embassy_time_set_alarm_callback(*a, increment_ctr, (a.id() + 1) as usize as *mut ());
+            _embassy_time_set_alarm_callback(**a, increment_ctr, (a.id() + 1) as usize as *mut ());
         }
         let now = _embassy_time_now();
 
         for a in alarms.iter() {
-            _embassy_time_set_alarm(*a, now + 60_000_000u64);
+            _embassy_time_set_alarm(**a, now + 60_000_000u64);
         }
-
-        riscv::asm::wfi();
-        riscv::asm::wfi();
-        riscv::asm::wfi();
+        //interrupts should immediately trigger after the other, so only 1 WFI call should be done
+        riscv::asm::wfi();   
         compare_ctr(12, "FAIL: ctr value is incorrect!");
 
         log_interrupt("DONE!")
