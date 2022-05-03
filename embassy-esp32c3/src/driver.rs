@@ -8,7 +8,7 @@ use core::option::Option;
 use core::panic;
 use embassy::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy::blocking_mutex::CriticalSectionMutex as Mutex;
-use embassy::interrupt::ESP32C3_Interrupts;
+use crate::interrupt::ESP32C3_Interrupts;
 // use AtomicPtr;
 // use embassy::interrupt::{Interrupt, InterruptExt};
 use crate::interrupt;

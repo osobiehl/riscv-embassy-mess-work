@@ -5,7 +5,7 @@ use riscv::register::{mcause, mip};
 
 use super::{raw, Spawner};
 use crate::channel::Signal;
-use crate::interrupt::{trigger_software_event, Interrupt, InterruptExt};
+use crate::interrupt::{Interrupt, InterruptExt};
 
 /// global atomic used to keep track of whether there is work to do since sev() is not available on RISCV
 static Signal_Work_Thread_Mode: AtomicBool = AtomicBool::new(false);
@@ -29,7 +29,7 @@ impl Executor {
     /// Create a new Executor.
     pub fn new() -> Self {
         Self {
-            //using artificially triggered software event
+            //use Signal_Work_Thread_Mode as substitute for local interrupt register
             inner: raw::Executor::new(
                 |_| unsafe {
                     Signal_Work_Thread_Mode.store(true, Ordering::AcqRel);
@@ -114,13 +114,17 @@ pub struct InterruptExecutor<I: Interrupt> {
     not_send: PhantomData<*mut ()>,
 }
 
-impl<I: Interrupt> InterruptExecutor<I> {
+impl<I: InterruptExt + 'static> InterruptExecutor<I> {
     /// Create a new Executor.
     pub fn new(irq: I) -> Self {
         let ctx = irq.number() as *mut ();
         Self {
             irq,
-            inner: raw::Executor::new(|ctx| pend_by_number(ctx as u16), ctx),
+            inner: raw::Executor::new(|ctx|unsafe {
+                let i = ctx as *mut I;
+                //TODO implement InterruptEXT
+                <I as InterruptExt>::pend(&*i);
+            }, ctx),
             not_send: PhantomData,
         }
     }

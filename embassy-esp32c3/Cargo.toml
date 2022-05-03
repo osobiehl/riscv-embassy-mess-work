@@ -13,6 +13,7 @@ nb = "1.0.0"
 embassy = { version = "0.1.0", path = "../embassy", features = [] }
 embassy-macros = {  path = "../embassy-macros", features = ["esp32c3"]}
 r0                          = "1.0.0"
+riscv-atomic-emulation-trap = "0.1.0"
 
 
 futures = { version = "0.3.17", default-features = false, features = ["async-await"] }
