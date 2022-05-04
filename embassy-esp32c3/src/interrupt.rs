@@ -1,5 +1,8 @@
-use esp32c3::{Interrupt as Interrupt_esp32c3, INTERRUPT_CORE0, SYSTEM};
+use atomic_polyfill::{compiler_fence, AtomicPtr, Ordering};
+use core::ptr;
+use embassy::interrupt::{Interrupt, InterruptExt};
 pub use esp32c3::interrupt::Interrupt as interrupt_source;
+use esp32c3::{Interrupt as Interrupt_esp32c3, INTERRUPT_CORE0, SYSTEM};
 use riscv::register::mcause;
 use riscv_atomic_emulation_trap as _;
 //TODO SETUP BOOT LINKING
@@ -10,7 +13,7 @@ extern "C" {
     fn interrupt1(frame: &mut TrapFrame);
     fn interrupt2(frame: &mut TrapFrame);
     fn interrupt3(frame: &mut TrapFrame);
-    fn interrupt4(frame: &mut TrapFrame);
+    // fn interrupt4(frame: &mut TrapFrame);
     fn interrupt5(frame: &mut TrapFrame);
     fn interrupt6(frame: &mut TrapFrame);
     fn interrupt7(frame: &mut TrapFrame);
@@ -103,6 +106,33 @@ pub enum Priority {
     Priority13,
     Priority14,
     Priority15,
+}
+impl Into<u8> for Priority {
+    fn into(self) -> u8 {
+        return self as u8;
+    }
+}
+impl From<u8> for Priority {
+    fn from(v: u8) -> Self {
+        match v {
+            1 => Priority::Priority1,
+            2 => Priority::Priority2,
+            3 => Priority::Priority3,
+            4 => Priority::Priority4,
+            5 => Priority::Priority5,
+            6 => Priority::Priority6,
+            7 => Priority::Priority7,
+            8 => Priority::Priority8,
+            9 => Priority::Priority9,
+            10 => Priority::Priority10,
+            11 => Priority::Priority11,
+            12 => Priority::Priority12,
+            13 => Priority::Priority13,
+            14 => Priority::Priority14,
+            15 => Priority::Priority15,
+            _ => Priority::None,
+        }
+    }
 }
 
 /// Registers saved in trap handler
@@ -385,29 +415,114 @@ pub mod ESP32C3_Interrupts {
     }
 }
 
-pub unsafe fn enable_software_event() {
-    let intr = &*INTERRUPT_CORE0::ptr();
-    intr.cpu_intr_from_cpu_0_map
-        .modify(|_, w| w.cpu_intr_from_cpu_0_map().bits(4));
-    intr.cpu_int_enable
-        .modify(|r, w| w.bits((1 << 4) | r.bits()));
-    ESP32C3_Interrupts::set_priority(
-        CpuInterrupt::Interrupt4,
-        Priority::Priority1 as u32,
-    );
-    ESP32C3_Interrupts::set_kind(CpuInterrupt::Interrupt4, InterruptKind::Level);
+static SW_INT1_Handler: embassy::interrupt::Handler = embassy::interrupt::Handler::new();
+/// Wrapper for software interrupt 1, can be used for interrupt mode executor
+pub struct SW_INT1 {}
+impl SW_INT1 {
+   pub fn new(prio: Priority) -> Self {
+        Self {}
+    }
 }
+unsafe impl Interrupt for SW_INT1 {
+    type Priority = Priority;
+    fn number(&self) -> isize {
+        4
+    }
+    unsafe fn steal() -> Self {
+        Self {}
+    }
+    unsafe fn __handler(&self) -> &'static embassy::interrupt::Handler {
+        //TODO
+        return &SW_INT1_Handler;
+    }
+}
+impl InterruptExt for SW_INT1 {
+    fn enable(&self) {
+        unsafe {
+            let intr = &*INTERRUPT_CORE0::ptr();
+            intr.cpu_intr_from_cpu_0_map
+                .modify(|r, w| w.cpu_intr_from_cpu_0_map().bits(4));
+            intr.cpu_int_enable
+                .modify(|r, w| w.bits((1 << 4) | r.bits()));
+            ESP32C3_Interrupts::set_priority(CpuInterrupt::Interrupt4, Priority::Priority1 as u32);
+            ESP32C3_Interrupts::set_kind(CpuInterrupt::Interrupt4, InterruptKind::Level);
+        }
+    }
+    fn disable(&self) {
+        ESP32C3_Interrupts::disable(CpuInterrupt::Interrupt4 as isize)
+    }
+    fn get_priority(&self) -> Self::Priority {
+        let p = ESP32C3_Interrupts::get_priority(CpuInterrupt::Interrupt4);
+        //TODO derive from for priority
+        Priority::from(p as u8)
+    }
+    fn is_active(&self) -> bool {
+        // TODO read from MIE
+        let code = riscv::register::mcause::read().code();
+        code == 4
+    }
+    fn is_pending(&self) -> bool {
+        ESP32C3_Interrupts::is_pending(CpuInterrupt::Interrupt4)
+    }
+    fn is_enabled(&self) -> bool {
+        ESP32C3_Interrupts::is_enabled(CpuInterrupt::Interrupt4)
+    }
+    fn pend(&self) {
+        unsafe {
+            let system = &*SYSTEM::ptr();
+            system
+                .cpu_intr_from_cpu_0
+                .modify(|_, w| w.cpu_intr_from_cpu_0().set_bit());
+        }
+    }
+    fn unpend(&self) {
+        unsafe {
+            let system = &*SYSTEM::ptr();
+            system
+                .cpu_intr_from_cpu_0
+                .modify(|_, w| w.cpu_intr_from_cpu_0().clear_bit());
+            ESP32C3_Interrupts::clear(CpuInterrupt::Interrupt4);
+        }
+    }
+    fn set_priority(&self, prio: Self::Priority) {
+        ESP32C3_Interrupts::set_priority(CpuInterrupt::Interrupt4, prio as u32);
+    }
+    fn set_handler(&self, func: unsafe fn(*mut ())) {
+        compiler_fence(Ordering::SeqCst);
+        let handler = unsafe { self.__handler() };
+        handler.func.store(func as *mut (), Ordering::Relaxed);
+        compiler_fence(Ordering::SeqCst);
+    }
 
-pub unsafe fn trigger_software_event() {
-    let system = &*SYSTEM::ptr();
-    system
-        .cpu_intr_from_cpu_0
-        .modify(|_, w| w.cpu_intr_from_cpu_0().set_bit());
+    fn remove_handler(&self) {
+        compiler_fence(Ordering::SeqCst);
+        let handler = unsafe { self.__handler() };
+        handler.func.store(ptr::null_mut(), Ordering::Relaxed);
+        compiler_fence(Ordering::SeqCst);
+    }
+
+    fn set_handler_context(&self, ctx: *mut ()) {
+        let handler = unsafe { self.__handler() };
+        handler.ctx.store(ctx, Ordering::Relaxed);
+    }
 }
-pub unsafe fn remove_software_event() {
-    let system = &*SYSTEM::ptr();
-    system
-        .cpu_intr_from_cpu_0
-        .modify(|_, w| w.cpu_intr_from_cpu_0().clear_bit());
-    ESP32C3_Interrupts::clear(CpuInterrupt::Interrupt4);
+unsafe impl ::embassy::util::Unborrow for SW_INT1 {
+    type Target = SW_INT1;
+    unsafe fn unborrow(self) -> SW_INT1 {
+        self
+    }
+}
+//interrupt4 is defined here
+#[no_mangle]
+pub fn interrupt4(_: *mut TrapFrame) {
+    unsafe {
+        let func = SW_INT1_Handler
+            .func
+            .load(embassy::export::atomic::Ordering::Relaxed);
+        let ctx = SW_INT1_Handler
+            .ctx
+            .load(embassy::export::atomic::Ordering::Relaxed);
+        let func: fn(*mut ()) = core::mem::transmute(func);
+        func(ctx)
+    }
 }

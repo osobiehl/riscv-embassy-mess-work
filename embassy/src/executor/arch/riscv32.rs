@@ -116,14 +116,14 @@ pub struct InterruptExecutor<I: Interrupt> {
 
 impl<I: InterruptExt + 'static> InterruptExecutor<I> {
     /// Create a new Executor.
-    pub fn new(irq: I) -> Self {
-        let ctx = irq.number() as *mut ();
+    pub fn new(mut irq: I) -> Self {
+        let ctx = &mut irq as *mut I as *mut ();
         Self {
             irq,
             inner: raw::Executor::new(|ctx|unsafe {
-                let i = ctx as *mut I;
+                let i = &*(ctx as *mut I);
                 //TODO implement InterruptEXT
-                <I as InterruptExt>::pend(&*i);
+                i.pend();
             }, ctx),
             not_send: PhantomData,
         }
@@ -152,10 +152,15 @@ impl<I: InterruptExt + 'static> InterruptExecutor<I> {
         init(self.inner.spawner());
 
         self.irq.set_handler(|ctx| unsafe {
-            let executor = &*(ctx as *const raw::Executor);
-            executor.poll();
+
+            let executor = &*(ctx as *const Self);
+            executor.inner.poll();
+            //unpend interrupt manually
+            executor.irq.unpend();
         });
-        self.irq.set_handler_context(&self.inner as *const _ as _);
+        self.irq.set_handler_context(self as *const _ as _);
+
+
         self.irq.enable();
     }
 }
