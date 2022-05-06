@@ -108,7 +108,7 @@ fn pend_by_number(n: u16) {
 ///
 /// It is somewhat more complex to use, it's recommended to use the thread-mode
 /// [`Executor`] instead, if it works for your use case.
-pub struct InterruptExecutor<I: Interrupt> {
+pub struct InterruptExecutor<I: InterruptExt> {
     irq: I,
     inner: raw::Executor,
     not_send: PhantomData<*mut ()>,
@@ -120,9 +120,11 @@ impl<I: InterruptExt + 'static> InterruptExecutor<I> {
         let ctx = &mut irq as *mut I as *mut ();
         Self {
             irq,
+            //takes the irq as an argument and pends it
             inner: raw::Executor::new(|ctx|unsafe {
                 let i = &*(ctx as *mut I);
-                //TODO implement InterruptEXT
+                // trigger the interrupt to indirectly call start()
+                // when the interrupt is serviced
                 i.pend();
             }, ctx),
             not_send: PhantomData,
@@ -150,13 +152,15 @@ impl<I: InterruptExt + 'static> InterruptExecutor<I> {
         self.irq.disable();
 
         init(self.inner.spawner());
-
+        //set interrupt handler to call poll() using this executor, then disable interrupt
         self.irq.set_handler(|ctx| unsafe {
+            //unpend interrupt first, so it may re-trigger if it is signalled again
+            
 
             let executor = &*(ctx as *const Self);
-            executor.inner.poll();
-            //unpend interrupt manually
             executor.irq.unpend();
+            executor.inner.poll();
+            
         });
         self.irq.set_handler_context(self as *const _ as _);
 

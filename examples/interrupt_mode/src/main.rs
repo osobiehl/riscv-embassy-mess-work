@@ -105,7 +105,7 @@ static mut SERIAL: Mutex<RefCell<Option<Serial<UART0>>>> = Mutex::new(RefCell::n
 #[embassy::task]
 async fn run_high() {
     loop {
-        log_interrupt("high priority interurpt preempts computation!");
+        log_interrupt("high priority interrupt preempts computation!");
         Timer::after(Duration::from_secs(3)).await;
     }
 }
@@ -115,15 +115,16 @@ async fn run_low() {
     // let mut delay = McycleDelay::new(20_000_000);
     loop {
         let start = Instant::now();
-        log_interrupt("    [med] Starting long computation");
+        log_interrupt("    [low] Starting long computation");
 
         // Spin-wait to simulate a long CPU computation
         let mut ctr = 0;
-        let bignum = 0x1ffffff;
+        let bignum = 0x2ffffff;
         while(ctr < bignum){
+            unsafe{riscv::asm::nop()}
             ctr+=1;
         }
-        log_interrupt("    [med] finished long computation");
+        log_interrupt("    [low] finished long computation");
 
         Timer::after(Duration::from_millis(20)).await;
     }
@@ -137,7 +138,7 @@ static EXECUTOR_LOW: Forever<Executor> = Forever::new();
 fn main() -> ! {
     let _p = embassy_esp32c3::init(Default::default());
     let mut serial = Serial::new(_p.UART0).unwrap();
-    writeln!(serial, "getting into criticalsection").ok();
+    writeln!(serial, "if you flash in release mode, the compiler might remove the work simulation").ok();
     critical_section::with(move |_cs| unsafe {
         SERIAL.get_mut().replace(Some(serial));
     });

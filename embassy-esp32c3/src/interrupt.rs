@@ -449,7 +449,15 @@ impl InterruptExt for SW_INT1 {
         }
     }
     fn disable(&self) {
-        ESP32C3_Interrupts::disable(CpuInterrupt::Interrupt4 as isize)
+        unsafe {
+        ESP32C3_Interrupts::disable(CpuInterrupt::Interrupt4 as isize);
+        let intr = &*INTERRUPT_CORE0::ptr();
+        intr.cpu_intr_from_cpu_0_map
+            .modify(|r, w| w.cpu_intr_from_cpu_0_map().bits(0));
+        intr.cpu_int_enable
+            .modify(|r, w| w.bits( !(1 << 4) & r.bits()));
+        }
+
     }
     fn get_priority(&self) -> Self::Priority {
         let p = ESP32C3_Interrupts::get_priority(CpuInterrupt::Interrupt4);

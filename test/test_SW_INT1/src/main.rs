@@ -94,6 +94,11 @@ fn main() -> ! {
         log_interrupt("pending software interrupt, if no output is given, this fails");
         software_interrupt.pend();
         log_interrupt("DONE!");
+        software_interrupt.disable();
+
+        log_interrupt("disabling software interrupt, program should not start an interrupt");
+        software_interrupt.pend();
+        log_interrupt("Done!");
 
         
 
