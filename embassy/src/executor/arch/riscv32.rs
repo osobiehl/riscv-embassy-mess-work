@@ -66,11 +66,18 @@ impl Executor {
                 self.inner.poll();
                 // we do not care about race conditions between the load and store operations, interrupts
                 //will only set this value to true.
-                if Signal_Work_Thread_Mode.load(Ordering::AcqRel){
-                    Signal_Work_Thread_Mode.store(false,  Ordering::AcqRel);
-                    continue;
-                }
-                riscv::asm::wfi();
+                critical_section::with(|_| unsafe {
+                    // if there is work to do, loop back to polling
+                    if Signal_Work_Thread_Mode.load(Ordering::AcqRel){
+                        Signal_Work_Thread_Mode.store(false,  Ordering::AcqRel);
+                    }
+                    // if not, wait for interrupt
+                    else {
+                        riscv::asm::wfi();
+                    }
+                });         
+                // if an interrupt occurred while waiting, it will be serviced here       
+                
             }
         }
     }
