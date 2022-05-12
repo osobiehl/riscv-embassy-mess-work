@@ -58,47 +58,39 @@
 #![feature(type_alias_impl_trait)]
 
 // use cortex_m_rt::entry;
-use riscv_rt::entry;
 // use defmt::{info, unwrap};
 use core::fmt::Write;
 use embassy::executor::{Executor, InterruptExecutor};
-use embassy::interrupt::InterruptExt;
-use embassy::time::{Duration, Instant, Timer};
+use embassy::time::{Duration, Timer};
 use embassy::util::Forever;
 
 // use esp32c3_hal::{pac::{Peripherals, LEDC, apb_ctrl::peri_backup_config}, prelude::*, RtcCntl, Serial, Timer as old_timer};
 use embassy;
-use embassy::executor::Spawner;
-use futures::task::Spawn;
-use nb::block;
+
 use panic_halt as _;
 // use embassy_macros::{main, task};
-use core::cell::{Cell, RefCell};
-use critical_section::CriticalSection;
-use embassy::blocking_mutex::raw::CriticalSectionRawMutex;
+use core::cell::RefCell;
+
 use embassy::blocking_mutex::CriticalSectionMutex as Mutex;
 use embassy_esp32c3::interrupt::SW_INT1;
-use embassy_esp32c3::pac::{Peripherals, UART0};
-use embassy_esp32c3::{init, rtc_cntl, timer, Serial};
-use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::prelude::_embedded_hal_watchdog_WatchdogDisable;
-use riscv::delay::McycleDelay;
+use embassy_esp32c3::pac::UART0;
+use embassy_esp32c3::Serial;
+
 // use defmt_rtt as _; // global logger
 // use panic_probe as _;
 
 fn log_interrupt(msg: &str) {
     critical_section::with(|cs| unsafe {
         let mut serial = SERIAL.borrow(cs).borrow_mut();
-        let mut serial = serial.as_mut().unwrap();
+        let serial = serial.as_mut().unwrap();
 
         writeln!(serial, "{}", msg).ok();
     })
 }
 #[no_mangle]
-pub fn __log(msg: &str){
+pub fn __log(msg: &str) {
     log_interrupt(msg);
 }
-
 
 static mut SERIAL: Mutex<RefCell<Option<Serial<UART0>>>> = Mutex::new(RefCell::new(None));
 
@@ -114,15 +106,14 @@ async fn run_high() {
 async fn run_low() {
     // let mut delay = McycleDelay::new(20_000_000);
     loop {
-        let start = Instant::now();
         log_interrupt("    [low] Starting long computation");
 
         // Spin-wait to simulate a long CPU computation
         let mut ctr = 0;
         let bignum = 0x2ffffff;
-        while(ctr < bignum){
-            unsafe{riscv::asm::nop()}
-            ctr+=1;
+        while ctr < bignum {
+            unsafe { riscv::asm::nop() }
+            ctr += 1;
         }
         log_interrupt("    [low] finished long computation");
 
@@ -138,7 +129,11 @@ static EXECUTOR_LOW: Forever<Executor> = Forever::new();
 fn main() -> ! {
     let _p = embassy_esp32c3::init(Default::default());
     let mut serial = Serial::new(_p.UART0).unwrap();
-    writeln!(serial, "if you flash in release mode, the compiler might remove the work simulation").ok();
+    writeln!(
+        serial,
+        "if you flash in release mode, the compiler might remove the work simulation"
+    )
+    .ok();
     critical_section::with(move |_cs| unsafe {
         SERIAL.get_mut().replace(Some(serial));
     });
@@ -158,6 +153,6 @@ fn main() -> ! {
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.put(Executor::new());
     executor.run(|spawner| {
-        spawner.spawn(run_low());
+        spawner.spawn(run_low()).ok();
     });
 }

@@ -9,7 +9,6 @@ pub mod rtc_cntl;
 pub mod systimer;
 pub mod timer;
 pub mod interrupt;
-use core::fmt::Write;
 
 pub mod pac {
     pub use esp32c3::*;
@@ -45,10 +44,10 @@ pub fn init(config: config::Config) -> Peripherals {
         rtc_cntl.set_super_wdt_enable(false);
         rtc_cntl.set_wdt_enable(false);
 
-        let mut serial = Serial::new(peripherals.UART0).unwrap();
-        writeln!(serial, "SETTING UP SERIAL!!");
+        // let mut serial = Serial::new(peripherals.UART0).unwrap();
+        // writeln!(serial, "SETTING UP SERIAL!!");
         
-        peripherals.UART0 = serial.free();
+        // peripherals.UART0 = serial.free();
         peripherals.TIMG0 = timer0.free();
         peripherals.TIMG1 = timer1.free();
         peripherals.RTC_CNTL = rtc_cntl.free();
@@ -98,7 +97,7 @@ extern "C" {
     static mut _rtc_fast_data_end: u32;
     static mut _irtc_fast_data: u32;
 }
-
+// Sets up interrupt and trap handlers
 global_asm!(
     r#"
 .section .trap, "ax"
@@ -341,8 +340,8 @@ pub fn mp_hook() -> bool {
     false
 }
 
-fn gpio_intr_enable(int_enable: bool, nmi_enable: bool) -> u8 {
-    int_enable as u8 | ((nmi_enable as u8) << 1)
-}
+// fn gpio_intr_enable(int_enable: bool, nmi_enable: bool) -> u8 {
+//     int_enable as u8 | ((nmi_enable as u8) << 1)
+// }
 
 

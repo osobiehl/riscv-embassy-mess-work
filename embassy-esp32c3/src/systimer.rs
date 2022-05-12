@@ -1,5 +1,3 @@
-use core::result::Result::{Err, Ok};
-use crate::interrupt::{CpuInterrupt, ESP32C3_Interrupts, InterruptKind, Priority};
 pub use esp32c3::{Interrupt, INTERRUPT_CORE0, SYSTIMER};
 pub fn get_time() -> u64 {
     unsafe {

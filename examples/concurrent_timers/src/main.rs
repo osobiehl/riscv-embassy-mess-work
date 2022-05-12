@@ -8,36 +8,27 @@ use core::fmt::Write;
 use embassy;
 use embassy::executor::Spawner;
 use embassy::time::{Duration, Timer};
-use futures::task::Spawn;
-use nb::block;
 use panic_halt as _;
-use riscv_rt::entry;
 // use embassy_macros::{main, task};
-use core::cell::{Cell, RefCell};
-use critical_section::CriticalSection;
-use embassy::blocking_mutex::raw::CriticalSectionRawMutex;
+use core::cell::RefCell;
 use embassy::blocking_mutex::CriticalSectionMutex as Mutex;
 use embassy_esp32c3::pac::{Peripherals, UART0};
-use embassy_esp32c3::{init, rtc_cntl, timer, Serial};
-use embedded_hal::prelude::_embedded_hal_watchdog_WatchdogDisable;
+use embassy_esp32c3::Serial;
 
 static mut SERIAL: Mutex<RefCell<Option<Serial<UART0>>>> = Mutex::new(RefCell::new(None));
 
 fn log_interrupt(msg: &str) {
     critical_section::with(|cs| unsafe {
         let mut serial = SERIAL.borrow(cs).borrow_mut();
-        let mut serial = serial.as_mut().unwrap();
+        let serial = serial.as_mut().unwrap();
 
         writeln!(serial, "{}", msg).ok();
     })
 }
 
-
-
 #[embassy::main]
-async fn main(spawner: Spawner, _p: Peripherals) {
-    let mut serial = Serial::new(_p.UART0).unwrap();
-    writeln!(serial, "getting into criticalsection").ok();
+async fn main(_spawner: Spawner, _p: Peripherals) {
+    let serial = Serial::new(_p.UART0).unwrap();
     critical_section::with(move |_cs| unsafe {
         SERIAL.get_mut().replace(Some(serial));
     });
@@ -56,12 +47,11 @@ async fn main(spawner: Spawner, _p: Peripherals) {
         }
     };
 
-    let async3 = async{
-        loop{
+    let async3 = async {
+        loop {
             Timer::after(Duration::from_secs(5)).await;
             log_interrupt("medium frequent tick");
         }
-
     };
 
     futures::join!(async1, async2, async3);

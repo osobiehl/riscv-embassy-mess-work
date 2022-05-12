@@ -27,7 +27,7 @@ impl Executor {
             not_send: PhantomData,
         }
     }
-
+        
     /// Run the executor.
     ///
     /// The `init` closure is called with a [`Spawner`] that spawns tasks on

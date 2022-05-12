@@ -1,7 +1,6 @@
 
 
-use atomic_polyfill::{compiler_fence, AtomicPtr, Ordering};
-use core::mem;
+use atomic_polyfill::{ AtomicPtr};
 use core::ptr;
 // use cortex_m::peripheral::NVIC;
 

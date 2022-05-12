@@ -1,14 +1,12 @@
 use atomic_polyfill::{AtomicBool, Ordering};
 use core::{marker::PhantomData};
 use core::ptr;
-use riscv::register::{mcause, mip};
-
 use super::{raw, Spawner};
-use crate::channel::Signal;
-use crate::interrupt::{Interrupt, InterruptExt};
+use crate::interrupt::InterruptExt;
 
 /// global atomic used to keep track of whether there is work to do since sev() is not available on RISCV
-static Signal_Work_Thread_Mode: AtomicBool = AtomicBool::new(false);
+/// 
+static SIGNAL_WORK_THREAD_MODE: AtomicBool = AtomicBool::new(false);
 
 /// Thread mode executor, using WFE/SEV.
 ///
@@ -31,8 +29,8 @@ impl Executor {
         Self {
             //use Signal_Work_Thread_Mode as substitute for local interrupt register
             inner: raw::Executor::new(
-                |_| unsafe {
-                    Signal_Work_Thread_Mode.store(true, Ordering::AcqRel);
+                |_| {
+                    SIGNAL_WORK_THREAD_MODE.store(true, Ordering::AcqRel);
                 },
                 ptr::null_mut(),
             ),
@@ -66,10 +64,10 @@ impl Executor {
                 self.inner.poll();
                 // we do not care about race conditions between the load and store operations, interrupts
                 //will only set this value to true.
-                critical_section::with(|_| unsafe {
+                critical_section::with(|_| {
                     // if there is work to do, loop back to polling
-                    if Signal_Work_Thread_Mode.load(Ordering::AcqRel){
-                        Signal_Work_Thread_Mode.store(false,  Ordering::AcqRel);
+                    if SIGNAL_WORK_THREAD_MODE.load(Ordering::AcqRel){
+                        SIGNAL_WORK_THREAD_MODE.store(false,  Ordering::AcqRel);
                     }
                     // if not, wait for interrupt
                     else {
@@ -82,17 +80,17 @@ impl Executor {
         }
     }
 }
-//TODO UNIMPLEMENTED
-fn pend_by_number(n: u16) {
-    // #[derive(Clone, Copy)]
-    // struct N(u16);
-    // unsafe impl cortex_m::interrupt::InterruptNumber for N {
-    //     fn number(self) -> u16 {
-    //         self.0
-    //     }
-    // }
-    // cortex_m::peripheral::NVIC::pend(N(n))
-}
+// //TODO UNIMPLEMENTED
+// fn pend_by_number(n: u16) {
+//     // #[derive(Clone, Copy)]
+//     // struct N(u16);
+//     // unsafe impl cortex_m::interrupt::InterruptNumber for N {
+//     //     fn number(self) -> u16 {
+//     //         self.0
+//     //     }
+//     // }
+//     // cortex_m::peripheral::NVIC::pend(N(n))
+// }
 
 /// Interrupt mode executor.
 ///

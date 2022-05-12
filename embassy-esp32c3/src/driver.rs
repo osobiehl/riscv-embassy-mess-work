@@ -1,6 +1,4 @@
-use core::borrow::BorrowMut;
 use core::cell::Cell;
-use core::sync::atomic::{compiler_fence, Ordering};
 use core::marker::Send;
 use core::{mem, ptr};
 use critical_section::CriticalSection;
@@ -15,19 +13,25 @@ use crate::interrupt;
 use crate::systimer;
 use embassy::time::driver::{AlarmHandle, Driver};
 use esp32c3::SYSTIMER;
-use riscv;
 
-// fn noop() {}
-// pub static NoOpHandler: embassy::interrupt::Handler = embassy::interrupt::Handler {
-//     func: AtomicPtr::new(unsafe { mem::transmute(noop) }),
-//     ctx: AtomicPtr::new(ptr::null_mut()),
-// };
 pub struct BaseInterrupt {
     external_interrupt_id: interrupt::interrupt_source,
     cpu_interrupt: interrupt::CpuInterrupt,
     priority: interrupt::Priority,
     // __handler: &'static embassy::interrupt::Handler,
 }
+impl BaseInterrupt{
+    fn enable(&mut self) {
+        interrupt::ESP32C3_Interrupts::enable(self.external_interrupt_id as isize, self.cpu_interrupt);
+        interrupt::ESP32C3_Interrupts::set_kind(self.cpu_interrupt, interrupt::InterruptKind::Level);
+        interrupt::ESP32C3_Interrupts::set_priority(self.cpu_interrupt, self.priority as u32);
+    }
+}
+// enables the interrupts and sets interrupt type
+
+
+
+
 //TODO: disable watchdog timers on super WDT, RTC WDT, and TIMG
 pub fn generate_systimer_interrupt_structs(
     prio: interrupt::Priority,
@@ -81,7 +85,6 @@ impl AlarmState {
     }
 }
 
-fn disable_watchdogs() {}
 // alarms are either set or unset:
 // since we have no guarantee on which of the 3 alarms will trigger first
 // we have to wrap them in an option for allocation, to see which handler is
@@ -93,11 +96,7 @@ pub struct SysTimerDriver {
     // esp32c3 has a 48-bit timer, that should be able to count for ~3 months (conservative estimate)
 }
 
-// enables the interrupts and sets interrupt type
-fn enable(i: &mut BaseInterrupt) {
-    interrupt::ESP32C3_Interrupts::enable(i.external_interrupt_id as isize, i.cpu_interrupt);
-    interrupt::ESP32C3_Interrupts::set_kind(i.cpu_interrupt, interrupt::InterruptKind::Level)
-}
+
 
 // register driver with the rest of embassy
 
@@ -111,12 +110,8 @@ embassy::time_driver_impl!(static DRIVER: SysTimerDriver = SysTimerDriver{
 impl SysTimerDriver {
     pub fn init(&'static self, irq_prio: crate::interrupt::Priority) {
         let (mut syst0, mut syst1,mut  syst2) = generate_systimer_interrupt_structs(irq_prio);
-        enable(&mut syst0);
-        interrupt::ESP32C3_Interrupts::set_priority(syst0.cpu_interrupt, irq_prio as u32);
-        enable(&mut syst1);
-        interrupt::ESP32C3_Interrupts::set_priority(syst1.cpu_interrupt, irq_prio as u32);
-        enable(&mut syst2);
-        interrupt::ESP32C3_Interrupts::set_priority(syst2.cpu_interrupt, irq_prio as u32);
+        syst0.enable();syst1.enable(); syst2.enable();
+        
     }
     fn get_time(&self) -> u64 {
         unsafe {
@@ -204,7 +199,7 @@ impl Driver for SysTimerDriver {
         self.get_time()
     }
     unsafe fn allocate_alarm(& self) -> Option<AlarmHandle> {
-        return critical_section::with(|_cs| unsafe  {
+        return critical_section::with(|_cs|  {
             let alarms = self.alarms.borrow(_cs);
             for i in 0..ALARM_COUNT {
 

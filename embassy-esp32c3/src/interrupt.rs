@@ -1,8 +1,8 @@
-use atomic_polyfill::{compiler_fence, AtomicPtr, Ordering};
+use atomic_polyfill::{compiler_fence, Ordering};
 use core::ptr;
 use embassy::interrupt::{Interrupt, InterruptExt};
 pub use esp32c3::interrupt::Interrupt as interrupt_source;
-use esp32c3::{Interrupt as Interrupt_esp32c3, INTERRUPT_CORE0, SYSTEM};
+use esp32c3::{ INTERRUPT_CORE0, SYSTEM};
 use riscv::register::mcause;
 use riscv_atomic_emulation_trap as _;
 //TODO SETUP BOOT LINKING
@@ -324,6 +324,7 @@ pub fn _setup_interrupts() {
     };
 }
 
+#[allow(non_snake_case)]
 pub mod ESP32C3_Interrupts {
     pub use super::*;
     pub fn enable(interrupt_number: isize, cpu_interrupt_number: CpuInterrupt) {
@@ -415,12 +416,14 @@ pub mod ESP32C3_Interrupts {
     }
 }
 
-static SW_INT1_Handler: embassy::interrupt::Handler = embassy::interrupt::Handler::new();
+static SW_INT1_HANDLER: embassy::interrupt::Handler = embassy::interrupt::Handler::new();
 /// Wrapper for software interrupt 1, can be used for interrupt mode executor
 pub struct SW_INT1 {}
 impl SW_INT1 {
    pub fn new(prio: Priority) -> Self {
-        Self {}
+        let s = Self {};
+        s.set_priority(prio);
+        s
     }
 }
 unsafe impl Interrupt for SW_INT1 {
@@ -433,15 +436,17 @@ unsafe impl Interrupt for SW_INT1 {
     }
     unsafe fn __handler(&self) -> &'static embassy::interrupt::Handler {
         //TODO
-        return &SW_INT1_Handler;
+        return &SW_INT1_HANDLER;
     }
 }
+
+
 impl InterruptExt for SW_INT1 {
     fn enable(&self) {
         unsafe {
             let intr = &*INTERRUPT_CORE0::ptr();
             intr.cpu_intr_from_cpu_0_map
-                .modify(|r, w| w.cpu_intr_from_cpu_0_map().bits(4));
+                .modify(|_, w| w.cpu_intr_from_cpu_0_map().bits(4));
             intr.cpu_int_enable
                 .modify(|r, w| w.bits((1 << 4) | r.bits()));
             ESP32C3_Interrupts::set_priority(CpuInterrupt::Interrupt4, Priority::Priority1 as u32);
@@ -453,7 +458,7 @@ impl InterruptExt for SW_INT1 {
         ESP32C3_Interrupts::disable(CpuInterrupt::Interrupt4 as isize);
         let intr = &*INTERRUPT_CORE0::ptr();
         intr.cpu_intr_from_cpu_0_map
-            .modify(|r, w| w.cpu_intr_from_cpu_0_map().bits(0));
+            .modify(|_, w| w.cpu_intr_from_cpu_0_map().bits(0));
         intr.cpu_int_enable
             .modify(|r, w| w.bits( !(1 << 4) & r.bits()));
         }
@@ -524,10 +529,10 @@ unsafe impl ::embassy::util::Unborrow for SW_INT1 {
 #[no_mangle]
 pub fn interrupt4(_: *mut TrapFrame) {
     unsafe {
-        let func = SW_INT1_Handler
+        let func = SW_INT1_HANDLER
             .func
             .load(embassy::export::atomic::Ordering::Relaxed);
-        let ctx = SW_INT1_Handler
+        let ctx = SW_INT1_HANDLER
             .ctx
             .load(embassy::export::atomic::Ordering::Relaxed);
         let func: fn(*mut ()) = core::mem::transmute(func);
