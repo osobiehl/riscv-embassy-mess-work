@@ -155,6 +155,7 @@ but not yet reaching the WFI section",
             log_interrupt("interrupt occurred, this should happen before servicing...");
         });
         log_interrupt("this should happen after servicing...");
+        log_interrupt("DONE!")
 
         // _embassy_time_set_alarm_callback(, callback, ctx)
     }

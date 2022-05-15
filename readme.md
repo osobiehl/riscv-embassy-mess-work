@@ -17,6 +17,8 @@ You need a nightly compiler to run the code in this repository. i.e. `rustup def
 
 Run `rustup target add riscv32imc-unknown-none-elf` to add the ESP32-C3's ISA as a target
 
+This project has been tested runing on `rustc 1.62.0-nightly (60e50fc1c 2022-04-04)`. 
+
 ### flashing
 
 This project uses `cargo espflash` to flash an ESP32C3 microcontroller, you can install it by running `cargo install cargo-espflash`
