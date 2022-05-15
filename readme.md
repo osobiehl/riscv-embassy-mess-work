@@ -11,6 +11,11 @@ Due to how interrupts are implemented in the esp32c3, this implementation does N
 
 ## Quick_Start
 
+### Important
+You need a nightly compiler to run the code in this repository. i.e. `rustup default nightly`
+
+
+Run `rustup target add riscv32imc-unknown-none-elf` to add the ESP32-C3's ISA as a target
 
 ### flashing
 
