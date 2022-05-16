@@ -97,8 +97,9 @@ static mut SERIAL: Mutex<RefCell<Option<Serial<UART0>>>> = Mutex::new(RefCell::n
 #[embassy::task]
 async fn run_high() {
     loop {
-        log_interrupt("high priority interrupt preempts computation!");
+        
         Timer::after(Duration::from_secs(3)).await;
+        log_interrupt("high priority interrupt preempts computation!");
     }
 }
 

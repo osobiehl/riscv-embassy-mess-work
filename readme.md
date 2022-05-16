@@ -19,6 +19,11 @@ Run `rustup target add riscv32imc-unknown-none-elf` to add the ESP32-C3's ISA as
 
 This project has been tested runing on `rustc 1.62.0-nightly (60e50fc1c 2022-04-04)`. 
 
+If you encounter an error related to rust-src not being found, you need to add it. This is the source code of the Rust standard library, it is necessary to build the core Rust library. The error will tell you to install 
+`rustup component add rust-src --toolchain nightly-<your_architecture>`
+
+ Follow the compiler's instructions in the error :^ )
+
 ### flashing
 
 This project uses `cargo espflash` to flash an ESP32C3 microcontroller, you can install it by running `cargo install cargo-espflash`
