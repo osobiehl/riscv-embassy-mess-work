@@ -418,6 +418,7 @@ pub mod ESP32C3_Interrupts {
 
 static SW_INT1_HANDLER: embassy::interrupt::Handler = embassy::interrupt::Handler::new();
 /// Wrapper for software interrupt 1, can be used for interrupt mode executor
+#[allow(non_camel_case_types)]
 pub struct SW_INT1 {}
 impl SW_INT1 {
    pub fn new(prio: Priority) -> Self {

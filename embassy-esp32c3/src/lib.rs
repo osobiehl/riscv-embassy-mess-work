@@ -4,7 +4,7 @@ use esp32c3::Peripherals;
 pub mod serial;
 pub use serial::Serial;
 pub mod driver;
-pub mod gpio;
+// pub mod gpio;
 pub mod rtc_cntl;
 pub mod systimer;
 pub mod timer;

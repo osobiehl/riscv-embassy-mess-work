@@ -155,7 +155,8 @@ impl SysTimerDriver {
         let ctx = alarm.ctx.get();
         f(ctx);
     }
-    #[inline(always)]
+    /// deallocate an alarm: might be used at some point in the future
+    #[allow(dead_code)]
     fn deallocate_alarm(&self, id: u8 ,_cs: CriticalSection,){
         unsafe{
             let alarm = self.alarms.borrow(_cs).get_unchecked(id as usize);
